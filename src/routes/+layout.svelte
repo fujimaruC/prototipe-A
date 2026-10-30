@@ -84,7 +84,7 @@ $effect(() => {
 		{@render children()}
 	</main>
 	<footer class="foot">
-		<span class="mono--micro">Drawing 01 · rev {page.url.pathname === '/secret' ? 'B' : 'A'}</span>
+		<span class="mono--micro">Drawing 01 · rev {page.url.pathname.replace(/\/$/, '').endsWith('/secret') ? 'B' : 'A'}</span>
 		<span class="mono--micro">Built with SvelteKit · no tracking · no cookies</span>
 	</footer>
 </div>

@@ -1,9 +1,9 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-import type { SubmitResult } from '$lib/flags';
-import { submit, TOTAL_TEST_POINTS } from '$lib/flags';
-import { tick } from '$lib/fx/audio';
-import { addFound, app } from '$lib/stores/app.svelte';
+	import type { SubmitResult } from '$lib/flags';
+	import { submit, TOTAL_TEST_POINTS } from '$lib/flags';
+	import { tick } from '$lib/fx/audio';
+	import { addFound, app } from '$lib/stores/app.svelte';
 
 let value = $state('');
 let status = $state<'idle' | 'checking' | 'found' | 'duplicate' | 'invalid' | 'unavailable'>('idle');
@@ -24,7 +24,7 @@ async function onSubmit(e: SubmitEvent) {
 		value = '';
 		if (app.sound) tick('found');
 		if (app.found.length >= TOTAL_TEST_POINTS) {
-			window.setTimeout(() => (window.location.href = '/secret'), 700);
+			window.setTimeout(() => (window.location.href = resolve('/secret')), 700);
 		}
 	} else if (result.kind === 'duplicate') {
 		status = 'duplicate';

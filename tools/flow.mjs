@@ -1,6 +1,6 @@
 import { chromium } from 'playwright';
 
-const BASE = 'http://localhost:4400';
+const BASE = process.argv[2] ?? 'http://localhost:4400';
 const b = await chromium.launch();
 const out = [];
 const log = (ok, name, extra = '') =>
@@ -150,7 +150,7 @@ const log = (ok, name, extra = '') =>
 	}
 	await p.waitForTimeout(1200);
 	const url = p.url();
-	log(url.endsWith('/secret'), 'all six unlocks /secret', url);
+	log(/\/secret\/?$/.test(url), 'all six unlocks /secret', url);
 	const open = await p.locator('.open').count();
 	log(open === 1, 'secret content rendered');
 	await ctx.close();
