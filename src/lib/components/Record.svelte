@@ -86,7 +86,8 @@
 	</header>
 
 	<!-- Accessible source of truth. Always present, in both modes. -->
-	<table class="sr-only">
+	<div class="sr-only">
+	<table>
 		<caption>Competition results by event, scope, year and result</caption>
 		<thead>
 			<tr><th scope="col">Event</th><th scope="col">Scope</th><th scope="col">Year</th><th scope="col">Result</th></tr>
@@ -102,6 +103,7 @@
 			{/each}
 		</tbody>
 	</table>
+	</div>
 
 	{#if useJourney}
 		<div class="pin" bind:this={pinEl} aria-hidden="true">
@@ -180,11 +182,13 @@
 	/* ---- journey ---- */
 	.pin {
 		overflow: hidden;
-		/* natural height: a fixed height left a dead band under the labels */
-		padding: var(--s-7) 0 var(--s-6);
+		/* a real stage, with the track centred in it: the timeline used to hug the top edge
+		   and leave the rest of the viewport empty */
+		min-height: clamp(360px, 62vh, 560px);
+		padding: var(--s-6) 0;
 		position: relative;
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 	}
 	.track {
 		position: relative;

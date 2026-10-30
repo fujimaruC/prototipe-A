@@ -67,6 +67,16 @@ function cacheTextRects(): void {
 	}
 }
 
+function countCollisions(x: number, y: number, w: number, h: number): number {
+	const pad = 2;
+	let n = 0;
+	for (const r of textRects) {
+		if (x + w - pad < r.left || x + pad > r.right || y + h - pad < r.top || y + pad > r.bottom) continue;
+		n++;
+	}
+	return n;
+}
+
 function collides(x: number, y: number, w: number, h: number): boolean {
 	const pad = 2;
 	for (const r of textRects) {
@@ -167,15 +177,25 @@ export function createCharacter({
 		const top = window.scrollY;
 		const bottom = top + vh;
 		const centre = top + vh * 0.5;
+
+		// Clearance under the chrome: the sprite must not stand against the status bar, or its
+		// bubble is pushed off-screen above it. Also keep it out of the top quarter, which is
+		// heading/metadata territory — a heading ledge there put the sprite over the copy.
+		const chrome = document.querySelector('.chrome-wrap')?.getBoundingClientRect();
+		const safeTop = Math.max(
+			top + (chrome ? chrome.bottom : 0) + spriteH + 56,
+			top + vh * 0.25
+		);
+
+		const score = (p: Platform) => Math.abs(p.top - centre);
+
 		let best: Platform | null = null;
 		let bestScore = Infinity;
 		for (const p of platforms) {
-			// The platform's top edge must be inside the viewport, with room for the sprite
-			// above it. A platform below the fold put the sprite and its bubble off-screen.
-			if (p.top < top + spriteH + 8 || p.top > bottom - 8) continue;
-			const score = Math.abs(p.top - centre);
-			if (score < bestScore) {
-				bestScore = score;
+			if (p.top < safeTop || p.top > bottom - 8) continue;
+			const s = score(p);
+			if (s < bestScore) {
+				bestScore = s;
 				best = p;
 			}
 		}
@@ -284,10 +304,69 @@ export function createCharacter({
 	};
 
 	/** After scrolling stops, settle onto the best platform in view. */
+	/**
+	 * Centre the sprite in the stage without covering copy. A fixed x landed on the hero's
+	 * alias text; scan outward from the centre for a column that is clear, and only fall back
+	 * to the centre if every candidate is occupied.
+	 */
+	const centreInStage = () => {
+		const y = window.scrollY + window.innerHeight * 0.5 - spriteH / 2;
+		const midX = window.innerWidth * 0.5 - spriteW / 2;
+		cacheTextRects();
+		// the bubble sits above the sprite, so score both boxes
+		const bubbleH = 44;
+		const overlapCount = (x: number) =>
+			countCollisions(x, y, spriteW, spriteH) + countCollisions(x, y - bubbleH, spriteW, bubbleH);
+
+		// Stay inside the sheet's content column, never the viewport margin: an unbounded scan
+		// parked the sprite in the right gutter, outside the drawing.
+		const main = document.querySelector('main')?.getBoundingClientRect();
+		const minX = main ? main.left + 8 : 8;
+		const maxX = main ? main.right - spriteW - 8 : window.innerWidth - spriteW - 8;
+		const centreX = (minX + maxX) / 2;
+
+		// Pick the column with the least overlap, preferring the centre on ties.
+		let bestX = centreX;
+		let bestScore = Infinity;
+		for (let x = minX; x <= maxX; x += 24) {
+			const overlap = overlapCount(x);
+			const score = overlap * 1000 + Math.abs(x - centreX) / 10;
+			if (score < bestScore) {
+				bestScore = score;
+				bestX = x;
+			}
+		}
+		place(bestX, y);
+	};
+
+	const sectionAtCentre = (): HTMLElement | null => {
+		const mid = window.scrollY + window.innerHeight * 0.5;
+		let best: HTMLElement | null = null;
+		let bestDist = Infinity;
+		for (const s of document.querySelectorAll<HTMLElement>('section[id], header[id]')) {
+			const r = s.getBoundingClientRect();
+			const top = r.top + window.scrollY;
+			const bottom = r.bottom + window.scrollY;
+			if (mid < top || mid > bottom) continue;
+			const d = Math.abs(mid - (top + bottom) / 2);
+			if (d < bestDist) {
+				bestDist = d;
+				best = s;
+			}
+		}
+		return best;
+	};
+
 	const onScrollSettled = () => {
 		if (dragging || mood === 'walk' || mood === 'portalOut' || mood === 'portalIn') return;
 		const p = nearest();
-		if (!p) return;
+		if (!p) {
+			// Nothing worth standing on in view: hold the vertical centre of the stage.
+			centreInStage();
+			const sec = sectionAtCentre();
+			if (sec) onSettle?.({ el: sec, top: 0, left: 0, right: 0 });
+			return;
+		}
 		if (current && current.el === p.el) {
 			// same platform: just re-seat, the page moved under us
 			standOn(p);
@@ -319,8 +398,25 @@ export function createCharacter({
 
 	// initial placement, then once more after webfonts settle the layout
 	const first = nearest();
-	if (first) standOn(first);
-	else place(window.innerWidth * 0.6, window.scrollY + window.innerHeight * 0.5);
+	(window as Window & { __charDebug?: unknown }).__charDebug = {
+		platforms: platforms.length,
+		firstFound: !!first,
+		firstTop: first ? Math.round(first.top) : null,
+		chromeBottom: Math.round(
+			document.querySelector('.chrome-wrap')?.getBoundingClientRect().bottom ?? 0
+		),
+		vh: window.innerHeight
+	};
+	if (first) {
+		standOn(first);
+	} else {
+		// No platform qualifies (nothing in view clears the chrome and the top quarter).
+		// Centre in the stage via the collision-aware helper, and still report the section so
+		// the dialogue stays attached to the character.
+		centreInStage();
+		const sec = sectionAtCentre();
+		if (sec) onSettle?.({ el: sec, top: 0, left: 0, right: 0 });
+	}
 
 	if (document.fonts?.ready) {
 		void document.fonts.ready.then(() => {

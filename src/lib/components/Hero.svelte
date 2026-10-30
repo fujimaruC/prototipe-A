@@ -129,7 +129,7 @@
 
 	<div class="strip-wrap">
 		<Cable />
-		<ul class="portstrip" aria-label="Port map">
+		<ul class="portstrip" data-platform aria-label="Port map">
 			{#each ports as p (p.id)}
 				<li class="port" data-frame={p.id}>
 					<span class="pid mono--micro">{p.id}</span>

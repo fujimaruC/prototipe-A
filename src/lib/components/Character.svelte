@@ -16,6 +16,7 @@
 	let frame = $state<SpriteFrame>('idle');
 	let on = $state(false);
 	let bubble = $state('');
+	let flip = $state(false);
 	let bubbleTimer = 0;
 
 	/** Which section is the character standing in? Read from the platform's nearest section. */
@@ -42,6 +43,10 @@
 		// Only restart the timer when the line actually changes, or a re-seat every frame
 		// would keep it on screen forever.
 		if (text === bubble) return;
+		// No room above the sprite: put the line underneath instead of pushing it off-screen.
+		const r = host?.getBoundingClientRect();
+		const chromeBottom = document.querySelector('.chrome-wrap')?.getBoundingClientRect().bottom ?? 0;
+		flip = r ? r.top - chromeBottom < 72 : false;
 		bubble = text;
 		bubbleTimer = window.setTimeout(() => (bubble = ''), 4200);
 	}
@@ -166,7 +171,7 @@
 			{/each}
 		</svg>
 		{#if bubble}
-			<p class="bubble mono--micro">{bubble}</p>
+			<p class="bubble mono--micro" class:flip>{bubble}</p>
 		{/if}
 	</div>
 {/if}
@@ -219,6 +224,16 @@
 		text-transform: none;
 		line-height: 1.35;
 		pointer-events: none;
+	}
+	.bubble.flip {
+		bottom: auto;
+		top: calc(100% + 6px);
+	}
+	.bubble.flip::after {
+		top: auto;
+		bottom: 100%;
+		border-top-color: transparent;
+		border-bottom-color: var(--ink);
 	}
 	.bubble::after {
 		content: '';
