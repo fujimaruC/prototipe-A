@@ -1,0 +1,24 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.6.4/schema.json",
+	"files": { "includes": ["src/**/*.ts", "src/**/*.svelte", "src/**/*.css", "test/**/*.ts", "tools/**/*.mjs"] },
+	"formatter": { "indentStyle": "tab", "lineWidth": 110 },
+	"linter": { "enabled": true, "rules": { "recommended": true } },
+	"javascript": { "formatter": { "quoteStyle": "single" } },
+	"overrides": [
+		{
+			"includes": ["**/*.svelte"],
+			"linter": {
+				"rules": {
+					"correctness": {
+						"noUnusedVariables": "off",
+						"noUnusedImports": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["tools/**/*.mjs"],
+			"linter": { "rules": { "style": { "useTemplate": "off" } } }
+		}
+	]
+}

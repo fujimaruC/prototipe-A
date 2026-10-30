@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+
+# build output
+.svelte-kit/
+build/
+.output/
+.vercel/
+.netlify/
+.wrangler/
+
+# local toolchain kept inside the project
+.tools/
+.npm-cache/
+.pnpm-store/
+
+# QA artifacts
+.shots/
+.preview.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# env
+.env
+.env.*
+!.env.example
+
+# vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
+
+# private: workspace rules + source brief (not part of the published site)
+CLAUDE.md
+PRD-sveltekit.md
