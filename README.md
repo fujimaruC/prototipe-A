@@ -18,6 +18,16 @@ pnpm preview      # serve build/ on :4173
 Deploy `build/` to any static host (Cloudflare Pages, GitHub Pages, Vercel, nginx).
 There is no server, no database, no environment variables.
 
+### GitHub Pages (live)
+
+Every push to `main` builds and publishes via `.github/workflows/deploy.yml`:
+
+**https://fujimaruC.github.io/prototipe-A/**
+
+Because Pages serves project repos from a subpath, the build uses `BASE_PATH`
+(default `/prototipe-A`, set from the repo name in CI). For a user site or custom
+domain, build with `BASE_PATH='' pnpm build` and adjust `paths.base` accordingly.
+
 ## Edit the content
 
 Every string lives in **`src/lib/content.ts`**. Nothing else needs touching to change copy,

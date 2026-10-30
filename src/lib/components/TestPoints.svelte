@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 import type { SubmitResult } from '$lib/flags';
 import { submit, TOTAL_TEST_POINTS } from '$lib/flags';
 import { tick } from '$lib/fx/audio';
@@ -94,7 +95,7 @@ const progress = $derived(app.found.length);
 	</form>
 
 	{#if progress >= TOTAL_TEST_POINTS}
-		<a class="unlock mono" href="/secret">Open restricted sheet →</a>
+		<a class="unlock mono" href={resolve('/secret')}>Open restricted sheet →</a>
 	{/if}
 </section>
 

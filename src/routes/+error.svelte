@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 import { page } from '$app/state';
 </script>
 
@@ -16,8 +17,8 @@ import { page } from '$app/state';
 	</p>
 	<p class="mono--micro dead" aria-hidden="true">Q0tUe3doMF8xc19hbnN3M3Ixbmd9</p>
 	<nav class="links">
-		<a class="mono" href="/">Return to the sheet</a>
-		<a class="mono ghost" href="/secret">Restricted sheet</a>
+		<a class="mono" href={resolve('/')}>Return to the sheet</a>
+		<a class="mono ghost" href={resolve('/secret')}>Restricted sheet</a>
 	</nav>
 </div>
 

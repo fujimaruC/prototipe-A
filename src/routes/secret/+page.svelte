@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 import { onMount } from 'svelte';
 import { contact, identity, meta, secret } from '$lib/content';
 import { TOTAL_TEST_POINTS } from '$lib/flags';
@@ -21,7 +22,7 @@ onMount(() => {
 </svelte:head>
 
 <div class="page">
-	<p class="mono--micro crumb"><a href="/">← back to the sheet</a></p>
+	<p class="mono--micro crumb"><a href={resolve('/')}>← back to the sheet</a></p>
 
 	{#if !ready}
 		<p class="mono">Reading storage…</p>
@@ -38,7 +39,7 @@ onMount(() => {
 				</div>
 			</div>
 			<p class="hint">{secret.locked.hint}</p>
-			<a class="back mono" href="/">Return to the drawing</a>
+			<a class="back mono" href={resolve('/')}>Return to the drawing</a>
 		</section>
 	{:else}
 		<section class="open" aria-labelledby="open-h">

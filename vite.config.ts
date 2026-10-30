@@ -3,6 +3,11 @@ import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
 
+// GitHub Pages serves project repos from /<repo>/, so the base must match the repo name.
+// Set BASE_PATH='' for a user site, a custom domain, or a local root-served build.
+type Base = '' | `/${string}`;
+const base = (process.env.BASE_PATH ?? '/prototipe-A') as Base;
+
 export default defineConfig({
 	resolve: {
 		alias: {
@@ -12,7 +17,8 @@ export default defineConfig({
 	plugins: [
 		sveltekit({
 			compilerOptions: { runes: true },
-			adapter: adapter({ fallback: undefined, strict: true }),
+			paths: { base },
+			adapter: adapter({ fallback: '404.html', strict: true }),
 			prerender: { handleHttpError: 'fail' }
 		})
 	]

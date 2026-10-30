@@ -1,2 +1,4 @@
 export const prerender = true;
-export const trailingSlash = 'never';
+// GitHub Pages resolves /secret to /secret/index.html; 'never' relies on extensionless
+// fallbacks that only some hosts implement.
+export const trailingSlash = 'always';

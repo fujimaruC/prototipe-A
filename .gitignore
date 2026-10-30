@@ -17,6 +17,7 @@ build/
 # QA artifacts
 .shots/
 .preview.log
+.serve/
 
 # OS
 .DS_Store

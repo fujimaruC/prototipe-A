@@ -45,11 +45,12 @@ const jsonLd = $derived(
 <svelte:head>
 	<title>{meta.title}</title>
 	<meta name="description" content={meta.description} />
-	<link rel="canonical" href="https://example.com/" />
+	<link rel="canonical" href="https://fujimaruC.github.io/prototipe-A/" />
 	<meta property="og:type" content="profile" />
 	<meta property="og:title" content={meta.title} />
 	<meta property="og:description" content={meta.description} />
 	<meta property="og:site_name" content={meta.siteName} />
+	<meta property="og:url" content="https://fujimaruC.github.io/prototipe-A/" />
 	<meta name="twitter:card" content="summary_large_image" />
 	{@html `<script type="application/ld+json">${jsonLd}<\/script>`}
 </svelte:head>

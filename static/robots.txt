@@ -3,4 +3,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: /sitemap.xml
+Sitemap: https://fujimaruC.github.io/prototipe-A/sitemap.xml
