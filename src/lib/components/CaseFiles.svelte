@@ -60,10 +60,10 @@ const statusLabel: Record<CaseFile['status'], string> = {
 };
 </script>
 
-<section class="cases" id="cases" aria-labelledby="cases-h">
+<section data-reveal data-skew class="cases" id="cases" aria-labelledby="cases-h">
 	<header class="head">
-		<h2 id="cases-h" class="display">Case files</h2>
-		<p class="intro">
+		<h2 data-reveal-head id="cases-h" class="display">Case files</h2>
+		<p data-reveal-meta class="intro">
 			Work on the record. One entry is written up; the rest are marked as drafts until the build notes are
 			in. Nothing here is scored for effect.
 		</p>
@@ -92,7 +92,10 @@ const statusLabel: Record<CaseFile['status'], string> = {
 					inert={!isOpen}
 					use:register={file.id}
 				>
-					<div class="panel-inner">
+					<div class="panel-inner" class:redacted={file.placeholder}>
+						{#if file.placeholder}
+							<p class="stamp mono--micro" aria-hidden="true">REDACTED</p>
+						{/if}
 						<p class="summary-text">{file.summary}</p>
 						{#each file.body as para, k (k)}
 							<p class="body" class:todo={file.placeholder}>{para}</p>
@@ -201,7 +204,53 @@ const statusLabel: Record<CaseFile['status'], string> = {
 		height: auto;
 	}
 	.panel-inner {
+		position: relative;
 		padding-left: 120px;
+	}
+	/* Empty slots are hatched, not blank: a redacted sheet rather than a missing one. */
+	.panel-inner.redacted {
+		background-image: repeating-linear-gradient(
+			-45deg,
+			var(--line) 0 1px,
+			transparent 1px 6px
+		);
+		background-size: 8px 8px;
+	}
+	.panel-inner.redacted::after {
+		content: '';
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background: linear-gradient(
+			to bottom,
+			transparent 0%,
+			color-mix(in srgb, var(--ground) 55%, transparent) 50%,
+			transparent 100%
+		);
+		animation: scanline 3.2s linear infinite;
+	}
+	@keyframes scanline {
+		from {
+			transform: translateY(-100%);
+		}
+		to {
+			transform: translateY(100%);
+		}
+	}
+	.stamp {
+		display: inline-block;
+		border: 1px solid var(--alert);
+		color: var(--alert);
+		padding: 3px 8px;
+		letter-spacing: 0.2em;
+		margin-bottom: var(--s-3);
+		transform: rotate(-1.5deg);
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.panel-inner.redacted::after {
+			animation: none;
+			display: none;
+		}
 	}
 	.row.open .panel-inner {
 		padding-bottom: var(--s-5);

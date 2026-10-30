@@ -2,10 +2,10 @@
 import { stack } from '$lib/content';
 </script>
 
-<section class="stack" id="stack" aria-labelledby="stack-h">
+<section data-reveal data-skew class="stack" id="stack" aria-labelledby="stack-h">
 	<header class="head">
-		<h2 id="stack-h" class="display">Stack</h2>
-		<p class="intro">What actually runs the rack. Grouped by where it sits, not by how impressive it sounds.</p>
+		<h2 data-reveal-head id="stack-h" class="display">Stack</h2>
+		<p data-reveal-meta class="intro">What actually runs the rack. Grouped by where it sits, not by how impressive it sounds.</p>
 	</header>
 	<div class="grid">
 		{#each stack as group, i (group.title)}

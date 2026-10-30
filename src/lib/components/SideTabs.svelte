@@ -1,5 +1,7 @@
 <script lang="ts">
 import { ports } from '$lib/content';
+import { playRing } from '$lib/fx/ring';
+import { prefersReducedMotion } from '$lib/fx/env';
 
 let { active = '' }: { active?: string } = $props();
 
@@ -9,7 +11,21 @@ function go(id: string, e: MouseEvent) {
 	e.preventDefault();
 	const el = document.getElementById(id);
 	if (!el) return;
-	el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+	// The ring opens from the tab you pressed, so the transition has a physical origin.
+	if (!prefersReducedMotion()) {
+		const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
+		const cs = getComputedStyle(document.documentElement);
+		void playRing({
+			x: r.left + r.width / 2,
+			y: r.top + r.height / 2,
+			ground: cs.getPropertyValue('--ground').trim() || '#ececec',
+			accent: cs.getPropertyValue('--accent').trim() || '#a34817',
+			duration: 560
+		});
+	}
+
+	el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
 	el.setAttribute('tabindex', '-1');
 	el.focus({ preventScroll: true });
 }

@@ -152,22 +152,46 @@ Bundle after P0: **123.9 KB gz initial, 141.3 KB gz total** (budget 180 KB).
 
 ### Cut, and why
 
-**The lava-lamp heat layer is disabled** (`USE_HEAT = false` in `gl/layer.ts`; the shader is
-kept and wired). Four tuning rounds — blob count, radius, smooth-min, coverage, gradient shape,
-band masking — still produced a uniform ordered-dither lattice over the name and the role line.
-A 1-bit dither at that scale has no mid-tones: it either prints a regular lattice or disappears.
-Fixing it properly means rendering at half resolution to a `RenderTarget` and upscaling with
-`NEAREST`, which is the next thing to try. Per the brief's own priority list, heat resolution is
-the first thing to drop, and legibility never drops.
+**The lava-lamp heat layer is cut, permanently** (`USE_HEAT = false` in `gl/layer.ts`; the shader
+is kept and wired so a future attempt starts from a working harness).
 
-The hero network field remains: nodes, links and travelling packets in the hero band only,
-quiet in positive (ink at 50% alpha) and rust in negative.
+Six rounds: blob count, radius, smooth-min, coverage shape, band mask, and finally a full
+rewrite from a signed-distance field to a continuous Gaussian intensity field. Every version
+printed a regular 4x4 lattice over the name and the role line.
+
+That is not a tuning miss, it is the medium. 1-bit ordered dithering quantises a smooth field
+into a fixed threshold map, so at 3px cells the 12px repeat becomes the dominant visual, and the
+human eye reads a grid rather than a mass. Making it read as texture needs error diffusion or a
+blue-noise mask, which is a different renderer, not a different constant.
+
+The brief's priority list drops heat resolution first, and legibility never drops. The hero
+network field stays: nodes, links and travelling packets, confined to the hero band, quiet in
+positive and rust in negative.
+
+### P1: motion system
+
+Personality: **Premium, with one Energetic accent** (the portal ring). One signature easing for
+80% of motion, three durations, one entrance pattern: "plotted in", never a bare fade-up.
+
+| Layer | Section reveal |
+|---|---|
+| Primary | heading wipes in via `clip-path` (not opacity) |
+| Secondary | the rule under it draws `scaleX(0 → 1)` |
+| Ambient | the meta line settles 60 ms later |
+
+Scroll-velocity skew on display type is capped at 2.5deg and decays within 300 ms, so it reads
+as paper flexing. Everything runs on ScrollTrigger, which shares GSAP's ticker with the driver,
+so there is still exactly one loop.
+
+Navigation (rail, index, theme toggle) opens a portal ring from the control you pressed. Case
+files keep the interruptible spring panel; empty slots are now hatched, stamped REDACTED, with a
+scanline sweep, and the sweep is removed under reduced motion.
 
 ### Known gaps
 
-- Heat layer disabled, as above.
-- Character, portal transitions between sections, Lenis/ScrollTrigger choreography, fullscreen
-  case-file sheets, horizontal Record, 3D rack, test-point hunt, sound and Konami: P1–P3.
+- Heat layer cut, as above.
+- Case files open as an inline spring panel, not yet a fullscreen FLIP sheet.
+- Character, horizontal Record, 3D rack, test-point hunt, sound and Konami: P2–P3.
 
 ## Deployment
 

@@ -1,0 +1,14 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+const p = await b.newPage({ viewport: { width: 1394, height: 723 } });
+const errs = [];
+p.on('pageerror', (e) => errs.push(e.message));
+p.on('console', (m) => { if (m.type() === 'error') errs.push(m.text().slice(0, 100)); });
+await p.goto('http://127.0.0.1:5173/prototipe-A/?quality=high', { waitUntil: 'networkidle' });
+await p.waitForTimeout(4500);
+await p.screenshot({ path: '.shots/p1-heat.png' });
+await p.getByRole('button', { name: /Positive/ }).click();
+await p.waitForTimeout(900);
+await p.screenshot({ path: '.shots/p1-heat-negative.png' });
+console.log(JSON.stringify({ errs: errs.slice(0, 3) }));
+await b.close();

@@ -1,6 +1,8 @@
 <script lang="ts">
 import { ports } from '$lib/content';
 import { app } from '$lib/stores/app.svelte';
+import { playRing } from '$lib/fx/ring';
+import { prefersReducedMotion } from '$lib/fx/env';
 
 const ids = ['profile', 'cases', 'record', 'stack', 'contact'];
 const entries = ports.map((p, i) => ({ ...p, id: ids[i] ?? '' }));
@@ -39,11 +41,24 @@ function close() {
 	returnTo = null;
 	queueMicrotask(() => target?.focus?.());
 }
-function choose(id: string) {
+function choose(id: string, origin?: { x: number; y: number }) {
 	close();
 	const el = document.getElementById(id);
 	if (!el) return;
-	el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+	// The ring opens from the row you picked, so the transition has a physical origin.
+	if (!prefersReducedMotion() && origin) {
+		const cs = getComputedStyle(document.documentElement);
+		void playRing({
+			x: origin.x,
+			y: origin.y,
+			ground: cs.getPropertyValue('--ground').trim() || '#ececec',
+			accent: cs.getPropertyValue('--accent').trim() || '#a34817',
+			duration: 560,
+		});
+	}
+
+	el.scrollIntoView({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
 	el.setAttribute('tabindex', '-1');
 	el.focus({ preventScroll: true });
 }
@@ -106,7 +121,13 @@ function onKey(e: KeyboardEvent) {
 		<ul class="list" role="listbox" aria-label="Sections" tabindex="-1">
 			{#each filtered as e, i (e.id)}
 				<li role="option" aria-selected={i === selected}>
-					<button onclick={() => choose(e.id)} onpointerenter={() => (selected = i)}>
+					<button
+						onclick={(ev) => {
+							const r = (ev.currentTarget as HTMLElement).getBoundingClientRect();
+							choose(e.id, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+						}}
+						onpointerenter={() => (selected = i)}
+					>
 						<span class="pid mono--micro">{e.id}</span>
 						<span class="plabel">{e.label}</span>
 						<span class="pdetail mono--micro">{e.detail}</span>

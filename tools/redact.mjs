@@ -1,0 +1,13 @@
+import { chromium } from 'playwright';
+const b = await chromium.launch({ args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'] });
+const p = await b.newPage({ viewport: { width: 1394, height: 723 } });
+await p.goto('http://127.0.0.1:5173/prototipe-A/?quality=low', { waitUntil: 'networkidle' });
+await p.waitForTimeout(1200);
+await p.locator('#cases').scrollIntoViewIfNeeded();
+await p.waitForTimeout(700);
+await p.locator('.row').nth(1).locator('.summary').click();
+await p.waitForTimeout(900);
+const box = await p.locator('.row').nth(1).boundingBox();
+await p.screenshot({ path: '.shots/p1-redacted.png', clip: { x: box.x, y: box.y, width: box.width, height: Math.min(box.height, 520) } });
+console.log(JSON.stringify({ h: Math.round(box.height) }));
+await b.close();

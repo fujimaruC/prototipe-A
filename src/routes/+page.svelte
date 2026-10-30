@@ -11,13 +11,16 @@ import TestPoints from '$lib/components/TestPoints.svelte';
 import { identity, meta } from '$lib/content';
 import { onFrame } from '$lib/fx/driver';
 import { prefersReducedMotion } from '$lib/fx/env';
+import { initReveals, initVelocitySkew } from '$lib/fx/reveal';
 
 let active = $state('profile');
 
 onMount(() => {
-	if (prefersReducedMotion()) return;
+	const stops = [initReveals(), initVelocitySkew()];
+	if (prefersReducedMotion()) return () => stops.forEach((fn) => fn());
+
 	const ids = ['home', 'profile', 'cases', 'record', 'stack', 'contact'];
-	return onFrame(() => {
+	const stopFrame = onFrame(() => {
 		let current = 'profile';
 		for (const id of ids) {
 			const el = document.getElementById(id);
@@ -26,6 +29,10 @@ onMount(() => {
 		}
 		active = current;
 	});
+	return () => {
+		stopFrame();
+		stops.forEach((fn) => fn());
+	};
 });
 
 const jsonLd = $derived(

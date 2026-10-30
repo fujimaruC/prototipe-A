@@ -2,13 +2,13 @@
 import { about } from '$lib/content';
 </script>
 
-<section class="profile" id="profile" aria-labelledby="profile-h">
+<section data-reveal data-skew class="profile" id="profile" aria-labelledby="profile-h">
 	<header class="head">
-		<h2 id="profile-h" class="display">{about.heading}</h2>
+		<h2 data-reveal-head id="profile-h" class="display">{about.heading}</h2>
 	</header>
 	<div class="cols">
 		<div class="prose">
-			<p class="lede">{about.lede}</p>
+			<p data-reveal-meta class="lede">{about.lede}</p>
 			{#each about.paragraphs as p, i (i)}
 				<p class="para">{p}</p>
 			{/each}

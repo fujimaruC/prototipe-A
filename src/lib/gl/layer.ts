@@ -94,10 +94,17 @@ export function createLayer({ tier, canvas, onFps }: LayerOptions): LayerHandle 
 	});
 
 	/**
-	 * Heat (metaball) pass is disabled. Four tuning rounds still produced a uniform ordered-
-	 * dither lattice sitting over the name and the role line, which breaks the one rule that
-	 * never bends: content legibility. The brief's own priority list drops heat resolution
-	 * first. The shader is kept, wired and ready, behind this flag.
+	 * Heat (metaball) pass is OFF, permanently.
+	 *
+	 * Six rounds: blob count, radius, smooth-min, coverage, band mask, and finally a full
+	 * rewrite from a signed-distance field to a continuous Gaussian intensity field. Every
+	 * version still printed a regular 4x4 lattice over the name and the role line. That is not
+	 * a tuning miss, it is the medium: 1-bit ordered dithering quantises a smooth field into a
+	 * fixed threshold map, so at 3px cells the 12px repeat is the dominant visual. Making it
+	 * read as texture needs error diffusion or blue noise, which is a different renderer.
+	 *
+	 * The brief's priority list drops heat resolution first, and legibility never drops. The
+	 * shader is kept and wired so the next attempt starts from a working harness.
 	 */
 	const USE_HEAT = false;
 

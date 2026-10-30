@@ -2,10 +2,10 @@
 import { certs, record } from '$lib/content';
 </script>
 
-<section class="record" id="record" aria-labelledby="record-h">
+<section data-reveal data-skew class="record" id="record" aria-labelledby="record-h">
 	<header class="head">
-		<h2 id="record-h" class="display">Record</h2>
-		<p class="intro">Competition results and certifications. Results are listed as they stand, including the one that is still pending.</p>
+		<h2 data-reveal-head id="record-h" class="display">Record</h2>
+		<p data-reveal-meta class="intro">Competition results and certifications. Results are listed as they stand, including the one that is still pending.</p>
 	</header>
 
 	<table class="sheet">

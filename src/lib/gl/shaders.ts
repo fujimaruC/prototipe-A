@@ -53,42 +53,46 @@ void main() {
 	float aspect = uRes.x / max(uRes.y, 1.0);
 	vec2 p = (vUv - 0.5) * vec2(aspect, 1.0);
 
-	// signed distance to the blob union; negative inside
-	float field = 1e4;
+	/*
+	 * Intensity, not a signed distance. An SDF is flat inside a blob, so dithering it prints a
+	 * regular lattice: the threshold sees one constant value across the whole core. A smooth
+	 * falloff per blob keeps the threshold varying continuously, which is what makes ordered
+	 * dithering read as a soft mass instead of a grid.
+	 */
+	float heat = 0.0;
 	for (int i = 0; i < 6; i++) {
 		float fi = float(i);
 		float a = uTime * (0.11 + fi * 0.017) + fi * 2.399;
 		vec2 c = vec2(
-			cos(a) * (0.34 + 0.12 * sin(fi * 1.7 + uTime * 0.21)),
-			sin(a * 1.13) * (0.24 + 0.10 * cos(fi * 2.1))
+			cos(a) * (0.30 + 0.12 * sin(fi * 1.7 + uTime * 0.21)),
+			sin(a * 1.13) * (0.20 + 0.09 * cos(fi * 2.1))
 		);
-		c.y *= 1.0 + clamp(abs(uScrollVel) * 0.012, 0.0, 0.45);
-		float r = 0.045 + 0.018 * sin(uTime * 0.7 + fi);
-		field = smin(field, length(p - c) - r, 0.035);
+		c.y *= 1.0 + clamp(abs(uScrollVel) * 0.010, 0.0, 0.4);
+		float r = 0.16 + 0.05 * sin(uTime * 0.7 + fi);
+		vec2 d = (p - c) / r;
+		heat += exp(-dot(d, d) * 1.7);
 	}
 
+	// cursor attraction adds a blob, the burst adds a hot flash
 	vec2 m = (uMouse - 0.5) * vec2(aspect, 1.0);
-	field = smin(field, length(p - m) - 0.05, 0.07) - uMouseStrength * 0.02;
-	field -= uBurst * 0.04 * exp(-length(p) * 2.5);
+	vec2 dm = (p - m) / 0.14;
+	heat += uMouseStrength * 0.9 * exp(-dot(dm, dm) * 1.6);
+	heat += uBurst * 1.4 * exp(-dot(p, p) * 5.0);
 
-	// coverage 0..1 with a soft edge, so the dither has a real gradient to work with
-	// A real gradient: soft shoulder so each blob dithers from dense core to sparse rim.
-	// A flat coverage value would print a regular lattice instead of a dithered mass.
-	float cover = smoothstep(0.05, -0.09, field) * 0.5;
-	cover *= cover;
+	// soft ceiling: the field stays a paper texture, never a veil over the type
+	float intensity = min(heat * 0.34, 0.55);
 
-	// Confine to the hero band. The layer is a living ground for the name, never a veil over
-	// body copy, so contrast on text is always measured against flat paper.
+	// Confine to the hero band, and start below the role line so small type stays on paper.
 	vec2 hp = (vUv - uRect.xy) / max(uRect.zw, vec2(0.0001));
 	float band =
 		step(0.0, hp.x) * step(hp.x, 1.0) *
 		step(0.0, hp.y) * step(hp.y, 1.0) *
-		smoothstep(0.0, 0.10, hp.y);
-	cover *= band;
+		smoothstep(0.0, 0.22, hp.y);
+	intensity *= band;
 
 	vec2 gp = floor(vUv * uRes / uPixel);
 	float t = bayer(gp);
-	float bit = step(t, cover);
+	float bit = step(t, intensity);
 
 	vec3 col = mix(uGround, uInk, bit);
 	if (uNegative > 0.5) {
