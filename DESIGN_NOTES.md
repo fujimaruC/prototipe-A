@@ -105,6 +105,22 @@ Six tokens, `CKT{...}`, stored only as SHA-256 digests in `src/lib/flags.ts`.
 Each is base64-encoded so no plaintext token exists in any build output. Verified with
 `grep -r "CKT{" build/` → no matches.
 
+## Deployment
+
+Live at **https://fujimaruC.github.io/prototipe-A/** via GitHub Actions
+(`.github/workflows/deploy.yml`): `pnpm check` → `pnpm build` → fail if any plaintext
+test point ships → upload → deploy.
+
+GitHub Pages serves a project repo from `/<repo>/`, which required four changes:
+
+1. `paths.base` from `BASE_PATH` (default `/prototipe-A`), so assets resolve under the subpath.
+2. `trailingSlash: 'always'` so `/secret` emits `secret/index.html`.
+3. `static/.nojekyll`, otherwise Pages' Jekyll drops `_app/`.
+4. `adapter-static` `fallback: '404.html'`, so unknown routes get this drawing's error sheet.
+
+All internal links go through `resolve()` from `$app/paths` — including the all-points redirect,
+which originally used a hardcoded `/secret` and broke on the subpath.
+
 ## Known limits
 
 - **`/secret` is client-side gating.** It is a static page; the "lock" is a UI state, not
