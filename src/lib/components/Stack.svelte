@@ -10,6 +10,7 @@
 	import { onMount } from 'svelte';
 	import { stack } from '$lib/content';
 	import { prefersReducedMotion } from '$lib/fx/env';
+	import TestMarker from '$lib/components/TestMarker.svelte';
 
 	let stage: HTMLDivElement | undefined = $state();
 	let tilt = $state(false);
@@ -53,6 +54,7 @@
 <section class="stack" id="stack" data-reveal aria-labelledby="stack-h">
 	<header class="head">
 		<h2 data-reveal-head data-skew data-platform id="stack-h" class="display">Stack</h2>
+		<TestMarker id="TP-04" />
 		<p data-reveal-meta class="intro">
 			What actually runs the rack. Grouped by where it sits, not by how impressive it sounds.
 		</p>

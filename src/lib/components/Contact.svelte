@@ -1,5 +1,6 @@
 <script lang="ts">
 import { contact, identity } from '$lib/content';
+import TestMarker from '$lib/components/TestMarker.svelte';
 
 let copied = $state<'idle' | 'copied' | 'unavailable'>('idle');
 
@@ -18,6 +19,7 @@ async function copy() {
 <section data-reveal class="contact" id="contact" aria-labelledby="contact-h">
 	<div class="inner">
 		<h2 data-reveal-head data-skew data-platform id="contact-h" class="display">Open a line</h2>
+		<TestMarker id="TP-03" />
 		<p data-reveal-meta class="avail">{contact.availability}</p>
 
 		<div class="line">

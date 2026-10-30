@@ -58,7 +58,9 @@ onMount(() => {
 			seq = [];
 			if (prefersReducedMotion()) return;
 			glitch = true;
+			app.konami = true;
 			window.setTimeout(() => (glitch = false), 1400);
+			window.setTimeout(() => (app.konami = false), 4200);
 		}
 	};
 	window.addEventListener('keydown', onKey);
@@ -84,6 +86,14 @@ $effect(() => {
 <Preloader />
 <CursorLens />
 <Character />
+
+{#if app.konami}
+	<div class="rain" aria-hidden="true">
+		{#each Array(28) as _, i (i)}
+			<span style:--x="{i * 3.7}%" style:--d="{i * 0.09}s" style:--t="{2 + (i % 5) * 0.4}s"></span>
+		{/each}
+	</div>
+{/if}
 
 <div class="frame" class:glitch>
 	<span class="reg reg-tl" aria-hidden="true"></span>
@@ -179,6 +189,28 @@ $effect(() => {
 		border-top: var(--hair) solid var(--line-strong);
 		padding: var(--s-4) 0 var(--s-6);
 		color: var(--ink-3);
+	}
+	/* Konami: packet rain in the accent colour. Decorative, reduced motion never reaches it. */
+	.rain {
+		position: fixed;
+		inset: 0;
+		z-index: calc(var(--z-chrome) + 1);
+		pointer-events: none;
+		overflow: hidden;
+	}
+	.rain span {
+		position: absolute;
+		top: -12px;
+		left: var(--x);
+		width: 3px;
+		height: 12px;
+		background: var(--accent);
+		animation: fall var(--t) linear var(--d) infinite;
+	}
+	@keyframes fall {
+		to {
+			transform: translateY(105vh);
+		}
 	}
 	.glitch {
 		animation: glitch var(--dur-5) steps(6, end) 1;

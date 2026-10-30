@@ -9,6 +9,7 @@
 	import { app } from '$lib/stores/app.svelte';
 	import { createCharacter, characterEnabled, type CharacterHandle } from '$lib/character/engine';
 	import { bubbles } from '$lib/content';
+	import { tick as sfx } from '$lib/fx/audio';
 	import { FRAMES, PALETTE, type SpriteFrame } from '$lib/character/sprite';
 
 	let host: HTMLDivElement | undefined = $state();
@@ -74,6 +75,7 @@
 						window.clearTimeout(bubbleTimer);
 						bubble = '';
 					}
+					if (app.sound && (m === 'portalOut' || m === 'portalIn')) sfx('portal');
 				},
 				onLand: (p) => say(bubbleFor(p.el)),
 				onSettle: (p) => {
@@ -100,6 +102,7 @@
 			const r = host.getBoundingClientRect();
 			if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
 			dragging = true;
+			if (app.sound) sfx('scratch');
 			dragStart = { x: e.clientX, y: e.clientY, t: performance.now() };
 			host.setPointerCapture(e.pointerId);
 			gsap.killTweensOf(host);
@@ -146,7 +149,7 @@
 </script>
 
 {#if on}
-	<div class="fuji" bind:this={host} aria-hidden="true" data-mood={app.characterMood}>
+	<div class="fuji" bind:this={host} aria-hidden="true" data-mood={app.characterMood} class:shades={app.konami}>
 		<svg viewBox="0 0 24 24" width="48" height="48" role="presentation">
 			{#each rows as row, y (y)}
 				{#each [...row] as ch, x (x)}
@@ -191,6 +194,17 @@
 	/* the blink frame is swapped in by the component, this only softens the transition */
 	.fuji[data-mood='idle'] svg {
 		transition: transform 120ms var(--ease-draw);
+	}
+	/* Konami: sunglasses. Drawn over the visor band, scaled with the sprite. */
+	.fuji.shades::after {
+		content: '';
+		position: absolute;
+		left: 20%;
+		top: 27%;
+		width: 60%;
+		height: 14%;
+		background: var(--accent);
+		box-shadow: 0 0 0 2px var(--ink);
 	}
 	.bubble {
 		position: absolute;

@@ -222,6 +222,19 @@ export const contact: Contact = {
 	availability: 'Open to freelance and remote work. Fastest reply is email.'
 };
 
+/**
+ * Where each test point physically lives. The marker names the location, never the token:
+ * the token itself stays in the file or element it describes.
+ */
+export const testPointHints: { id: string; where: string; hint: string }[] = [
+	{ id: 'TP-01', where: 'sheet markup', hint: 'An attribute on the main sheet, hidden from view.' },
+	{ id: 'TP-02', where: 'ports.csv', hint: 'The port schedule in the repository root.' },
+	{ id: 'TP-03', where: 'robots.txt', hint: 'The file crawlers read first.' },
+	{ id: 'TP-04', where: 'layout', hint: 'A span in the root layout, after the skip link.' },
+	{ id: 'TP-05', where: 'cable drawing', hint: 'The description of the cable in the hero.' },
+	{ id: 'TP-06', where: '404 sheet', hint: 'The sheet you only see when a route is missing.' }
+];
+
 /** One line per section, shown by the character. Facts only, nothing it cannot know. */
 export const bubbles: Record<string, string> = {
 	home: 'Rack is up. Scroll when ready.',

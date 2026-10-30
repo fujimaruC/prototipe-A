@@ -1,6 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte';
 import { identity } from '$lib/content';
+import { TOTAL_TEST_POINTS } from '$lib/flags';
+import { app } from '$lib/stores/app.svelte';
 
 let clock = $state('--:--:--');
 let uptime = $state('00:00');
@@ -46,6 +48,7 @@ onMount(() => {
 	<span class="cell"><span class="k">TZ</span> {identity.timezone}</span>
 	<span class="cell hide-sm"><span class="k">XY</span> {coords}</span>
 	<span class="cell"><span class="k">SCR</span> {scrollPct}%</span>
+	<span class="cell found"><span class="k">TP</span> {app.found.length}/{TOTAL_TEST_POINTS}</span>
 	<span class="cell hide-md"><span class="k">UP</span> {uptime}</span>
 	<span class="cell hide-md"><span class="k">VP</span> {viewport}</span>
 </div>
@@ -71,6 +74,10 @@ onMount(() => {
 	.k {
 		color: var(--ink-3);
 		margin-right: 4px;
+	}
+	.found {
+		color: var(--accent);
+		font-variant-numeric: tabular-nums;
 	}
 	@media (max-width: 860px) {
 		.hide-md {

@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 import { page } from '$app/state';
+import TestMarker from '$lib/components/TestMarker.svelte';
 </script>
 
 <svelte:head>
@@ -10,6 +11,7 @@ import { page } from '$app/state';
 
 <div class="wrap">
 	<p class="mono--micro code">ERR {page.status}</p>
+	<div class="tp-row"><TestMarker id="TP-06" /></div>
 	<h1 class="display">No route<br />on this sheet</h1>
 	<p class="lede">
 		Nothing is broken. This address just does not terminate on the sheet — the path you followed

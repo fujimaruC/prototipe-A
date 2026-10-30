@@ -7,6 +7,7 @@
 	import { onFrame } from '$lib/fx/driver';
 	import { getLayer } from '$lib/gl/instance';
 	import Cable from './Cable.svelte';
+	import TestMarker from '$lib/components/TestMarker.svelte';
 
 	let nameEl: HTMLHeadingElement | undefined = $state();
 	let heroEl: HTMLElement | undefined = $state();
@@ -139,8 +140,9 @@
 		</ul>
 	</div>
 
-	<div class="hero-foot" aria-hidden="true">
+	<div class="hero-foot">
 		<span class="mono--micro">PACKETS <b>{app.packets}</b></span>
+		<TestMarker id="TP-05" />
 		<span class="mono--micro">CLICK THE FIELD</span>
 	</div>
 </header>
@@ -323,6 +325,7 @@
 		line-height: 1.35;
 	}
 	.hero-foot {
+		align-items: center;
 		background: var(--ground);
 		padding: var(--s-3) 0 var(--s-6);
 		display: flex;

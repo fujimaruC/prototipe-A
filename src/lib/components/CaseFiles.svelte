@@ -3,6 +3,7 @@ import { animate, stagger } from 'motion';
 import type { CaseFile } from '$lib/content';
 import { caseFiles } from '$lib/content';
 import { prefersReducedMotion } from '$lib/fx/env';
+import TestMarker from '$lib/components/TestMarker.svelte';
 
 let open = $state<string | null>(null);
 const panels = new Map<string, HTMLDivElement>();
@@ -63,6 +64,7 @@ const statusLabel: Record<CaseFile['status'], string> = {
 <section data-reveal class="cases" id="cases" aria-labelledby="cases-h">
 	<header class="head">
 		<h2 data-reveal-head data-skew data-platform id="cases-h" class="display">Case files</h2>
+		<TestMarker id="TP-02" />
 		<p data-reveal-meta class="intro">
 			Work on the record. One entry is written up; the rest are marked as drafts until the build notes are
 			in. Nothing here is scored for effect.

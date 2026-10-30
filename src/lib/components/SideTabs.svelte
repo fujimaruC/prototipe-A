@@ -1,7 +1,9 @@
 <script lang="ts">
 import { ports } from '$lib/content';
-import { playRing } from '$lib/fx/ring';
+import { tick as sfx } from '$lib/fx/audio';
 import { prefersReducedMotion } from '$lib/fx/env';
+import { playRing } from '$lib/fx/ring';
+import { app } from '$lib/stores/app.svelte';
 
 let { active = '' }: { active?: string } = $props();
 
@@ -40,6 +42,7 @@ function go(id: string, e: MouseEvent) {
 					href="#{id}"
 					class:current={active === id}
 					data-frame={port.id}
+					onmouseenter={() => app.sound && sfx('hover')}
 					onclick={(e) => go(id, e)}
 				>
 					<span class="idx mono--micro">{port.id}</span>

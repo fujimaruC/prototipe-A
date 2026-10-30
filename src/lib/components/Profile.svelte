@@ -1,10 +1,12 @@
 <script lang="ts">
 import { about } from '$lib/content';
+import TestMarker from '$lib/components/TestMarker.svelte';
 </script>
 
 <section data-reveal class="profile" id="profile" aria-labelledby="profile-h">
 	<header class="head">
 		<h2 data-reveal-head data-skew data-platform id="profile-h" class="display">{about.heading}</h2>
+		<TestMarker id="TP-01" />
 	</header>
 	<div class="cols">
 		<div class="prose">

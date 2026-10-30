@@ -22,7 +22,7 @@ async function onSubmit(e: SubmitEvent) {
 		message = `${result.id} traced. ${app.found.length} of ${TOTAL_TEST_POINTS} found.`;
 		live = message;
 		value = '';
-		if (app.sound) tick('found');
+		if (app.sound) tick('chime');
 		if (app.found.length >= TOTAL_TEST_POINTS) {
 			window.setTimeout(() => (window.location.href = resolve('/secret')), 700);
 		}

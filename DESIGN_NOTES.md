@@ -247,6 +247,49 @@ under 4.5:1. Both removed.
 Bundle: **128.5 KB gz initial, 146.3 KB gz total** (budget 180).
 
 
+## P3: test-point hunt, sound, Konami, tiers
+
+### Test points
+
+Six markers, one per token, each naming *where* the token lives and never the token itself, so
+finding it is still the work. Hints live in `testPointHints` in `content.ts`.
+
+TP-05 originally sat inside the name block, where the giant glyphs painted over it: the click
+landed on a letter, not the button. Moved to the hero foot, which also stopped that row being
+`aria-hidden` decoration.
+
+The marker's first `aria-label` failed axe's `label-content-name-mismatch` (the label must
+contain the visible text). Dropped it: the visible "TP-05 open" names the control, and the
+location goes in `aria-describedby`.
+
+A persistent `TP n/6` cell in the telemetry bar shows progress from any scroll position.
+
+TP-06 lives on the 404 sheet by design, so the home page shows five.
+
+### Sound
+
+Opt-in, off by default, gated on `app.sound` at every call site. Seven voices:
+`tap`, `hover`, `open`, `found`, `chime`, `scratch`, `portal`. All synthesised with one
+oscillator plus a gain envelope, so there are no audio assets. Pen scratch on drag, hover tick
+on the rail, portal sweep on travel, chime on a traced point.
+
+### Konami
+
+Glitch pass, packet rain (28 accent-coloured bars), and sunglasses on the sprite. Never runs
+under reduced motion, and `app.konami` clears after 4.2 s.
+
+### Quality tiers
+
+`high | medium | low` from pointer type, viewport, cores and memory; a 1-second FPS probe
+demotes after two consecutive seconds under 50. `?quality=` pins it for QA, because software GL
+would otherwise always demote and hide every effect.
+
+Under reduced motion the audit reports: 5 markers, 0 rain, no canvas, no lens, no sprite,
+0 motion-hidden text. On mobile: 5 markers, 0 tap targets under 44px, no horizontal overflow.
+
+Bundle: **129.8 KB gz initial, 147.6 KB gz total** (budget 180).
+
+
 ## Deployment
 
 Live at **https://fujimaruC.github.io/prototipe-A/** via GitHub Actions
