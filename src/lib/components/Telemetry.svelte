@@ -45,12 +45,12 @@ onMount(() => {
 
 <div class="telemetry mono--micro" aria-label="Live readouts" role="status">
 	<span class="cell"><span class="k">LOCAL</span> {clock}</span>
-	<span class="cell"><span class="k">TZ</span> {identity.timezone}</span>
+	<span class="cell hide-sm"><span class="k">TZ</span> {identity.timezone}</span>
 	<span class="cell hide-sm"><span class="k">XY</span> {coords}</span>
-	<span class="cell"><span class="k">SCR</span> {scrollPct}%</span>
+	<span class="cell hide-sm"><span class="k">SCR</span> {scrollPct}%</span>
 	<span class="cell found"><span class="k">TP</span> {app.found.length}/{TOTAL_TEST_POINTS}</span>
 	<span class="cell hide-md"><span class="k">UP</span> {uptime}</span>
-	<span class="cell hide-md"><span class="k">VP</span> {viewport}</span>
+	<span class="cell hide-sm"><span class="k">VP</span> {viewport}</span>
 </div>
 
 <style>
@@ -87,6 +87,9 @@ onMount(() => {
 	@media (max-width: 620px) {
 		.hide-sm {
 			display: none;
+		}
+		.cell {
+			padding: 3px 6px;
 		}
 	}
 </style>
