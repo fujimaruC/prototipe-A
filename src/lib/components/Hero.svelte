@@ -1,94 +1,107 @@
 <script lang="ts">
-import { onMount } from 'svelte';
-import { identity, ports } from '$lib/content';
-import { paintDither } from '$lib/fx/dither';
-import { prefersReducedMotion } from '$lib/fx/env';
-import { app, markSeen } from '$lib/stores/app.svelte';
-import Cable from './Cable.svelte';
+	import { onMount } from 'svelte';
+	import { gsap } from 'gsap';
+	import { identity, ports } from '$lib/content';
+	import { app } from '$lib/stores/app.svelte';
+	import { prefersReducedMotion } from '$lib/fx/env';
+	import { onFrame } from '$lib/fx/driver';
+	import { getLayer } from '$lib/gl/instance';
+	import Cable from './Cable.svelte';
 
-let canvas: HTMLCanvasElement | undefined = $state();
-let resolving = $state(false);
-let done = $state(false);
-let stage: HTMLDivElement | undefined = $state();
+	let nameEl: HTMLHeadingElement | undefined = $state();
+	let heroEl: HTMLElement | undefined = $state();
+	let ready = $state(false);
 
-onMount(() => {
-	if (prefersReducedMotion() || app.introSeen || !canvas) {
-		done = true;
-		return;
-	}
-	resolving = true;
-	const el = canvas;
-	const ctx = el.getContext('2d');
-	if (!ctx) {
-		done = true;
-		return;
-	}
-	const dpr = Math.min(window.devicePixelRatio || 1, 2);
-	const rect = el.getBoundingClientRect();
-	el.width = Math.round(rect.width * dpr);
-	el.height = Math.round(rect.height * dpr);
-	ctx.scale(dpr, dpr);
+	onMount(() => {
+		ready = true;
+		if (prefersReducedMotion()) return;
 
-	const styles = getComputedStyle(document.documentElement);
-	const ink = styles.getPropertyValue('--ink').trim() || '#0a0a0a';
-	const ground = styles.getPropertyValue('--ground').trim() || '#ececec';
+		// The band must follow the hero as it scrolls, otherwise the living layer stays pinned
+		// to the top of the viewport and dots appear over later sections.
+		const publish = () => {
+			const layer = getLayer();
+			if (!layer || !heroEl) return;
+			const r = heroEl.getBoundingClientRect();
+			const vh = window.innerHeight;
+			if (r.bottom < -40 || r.top > vh + 40) {
+				layer.setHeroRect({ x: 0, y: -10, w: 1, h: 0.0001 });
+				return;
+			}
+			layer.setHeroRect({ x: 0, y: 1 - (r.top + r.height) / vh, w: 1, h: r.height / vh });
+		};
+		const stopBand = onFrame(publish);
 
-	let start = 0;
-	let raf = 0;
-	const dur = 620;
-
-	const draw = (now: number) => {
-		if (!start) start = now;
-		const t = Math.min(1, (now - start) / dur);
-		paintDither(ctx, {
-			width: rect.width,
-			height: rect.height,
-			cell: 4,
-			progress: t * t,
-			ink,
-			ground,
-			seed: 7,
-		});
-		if (t < 1) {
-			raf = requestAnimationFrame(draw);
-		} else {
-			finish();
+		// Name physics: each letter springs away from the cursor, flicks on click.
+		const letters = nameEl?.querySelectorAll<HTMLElement>('.glyph');
+		if (!letters || app.tier === 'low') {
+			return stopBand;
 		}
-	};
 
-	const finish = () => {
-		cancelAnimationFrame(raf);
-		window.removeEventListener('keydown', finish);
-		window.removeEventListener('pointerdown', finish);
-		resolving = false;
-		done = true;
-		markSeen();
-	};
+		const state = [...letters].map((el) => ({
+			el,
+			x: gsap.quickTo(el, 'x', { duration: 0.55, ease: 'power3.out' }),
+			y: gsap.quickTo(el, 'y', { duration: 0.55, ease: 'power3.out' })
+		}));
 
-	window.addEventListener('keydown', finish);
-	window.addEventListener('pointerdown', finish);
-	raf = requestAnimationFrame(draw);
-	return () => {
-		cancelAnimationFrame(raf);
-		window.removeEventListener('keydown', finish);
-		window.removeEventListener('pointerdown', finish);
-	};
-});
+		const onMove = (e: PointerEvent) => {
+			for (const s of state) {
+				const r = s.el.getBoundingClientRect();
+				const cx = r.left + r.width / 2;
+				const cy = r.top + r.height / 2;
+				const dx = cx - e.clientX;
+				const dy = cy - e.clientY;
+				const d = Math.hypot(dx, dy);
+				const reach = 190;
+				if (d < reach) {
+					const f = (1 - d / reach) * 16;
+					s.x((dx / (d || 1)) * f);
+					s.y((dy / (d || 1)) * f);
+				} else {
+					s.x(0);
+					s.y(0);
+				}
+			}
+		};
+
+		const onClick = (e: PointerEvent) => {
+			const target = e.target as HTMLElement;
+			const glyph = target.closest<HTMLElement>('.glyph');
+			if (!glyph) return;
+			gsap.fromTo(
+				glyph,
+				{ scale: 1.18, rotate: -6 },
+				{ scale: 1, rotate: 0, duration: 0.9, ease: 'elastic.out(1, 0.4)' }
+			);
+		};
+
+		window.addEventListener('pointermove', onMove, { passive: true });
+		window.addEventListener('pointerdown', onClick);
+
+		return () => {
+			stopBand();
+			window.removeEventListener('pointermove', onMove);
+			window.removeEventListener('pointerdown', onClick);
+		};
+	});
 </script>
 
-<header class="hero" id="home" data-frame="HOME">
+<header class="hero" id="home" data-frame="HOME" bind:this={heroEl}>
 	<div class="hero-grid">
 		<div class="name-block">
 			<p class="mono role">{identity.role}</p>
-			<h1 class="name" class:resolved={done}>
-				<span class="l1">{identity.first}</span>
-				<span class="l2">{identity.last}</span>
+			<h1 class="name" bind:this={nameEl} class:ready>
+				<span class="line" aria-hidden="true">
+					{#each [...identity.first] as ch, i (i)}
+						<span class="glyph" style:--i={i}>{ch}</span>
+					{/each}
+				</span>
+				<span class="line line-2" aria-hidden="true">
+					{#each [...identity.last] as ch, i (i)}
+						<span class="glyph" style:--i={i + identity.first.length}>{ch}</span>
+					{/each}
+				</span>
+				<span class="sr-only">{identity.first} {identity.last}</span>
 			</h1>
-			<div class="stage" bind:this={stage}>
-				{#if resolving}
-					<canvas bind:this={canvas} class="noise" aria-hidden="true"></canvas>
-				{/if}
-			</div>
 		</div>
 
 		<div class="hero-side">
@@ -125,61 +138,84 @@ onMount(() => {
 			{/each}
 		</ul>
 	</div>
+
+	<div class="hero-foot" aria-hidden="true">
+		<span class="mono--micro">PACKETS <b>{app.packets}</b></span>
+		<span class="mono--micro">CLICK THE FIELD</span>
+	</div>
 </header>
 
 <style>
 	.hero {
 		position: relative;
-		padding: var(--s-8) 0 var(--s-7);
+		/* no bottom padding: the opaque foot plate must reach the section border, or the
+		   living layer shows through as a dotted strip under the port labels */
+		padding: var(--s-7) 0 0;
 		border-bottom: var(--hair) solid var(--line-strong);
 	}
 	.hero-grid {
 		display: grid;
-		grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-		gap: clamp(24px, 4vw, 72px);
+		/* the 1.55fr name column now reserves a real gutter, so the "O" cannot reach the copy */
+		grid-template-columns: minmax(0, 1.42fr) minmax(300px, 1fr);
+		gap: clamp(32px, 5vw, 96px);
 		align-items: start;
 	}
 	.role {
 		color: var(--ink-2);
-		margin-bottom: var(--s-5);
+		margin-bottom: var(--s-4);
 	}
 	.name {
 		font-family: var(--font-display);
 		font-size: var(--text-name);
-		line-height: 0.82;
-		letter-spacing: -0.045em;
+		line-height: 0.8;
+		letter-spacing: -0.05em;
 		font-weight: 800;
-		font-stretch: 78%;
+		font-stretch: 76%;
 		text-transform: uppercase;
+		margin-left: -0.05em;
 		display: flex;
 		flex-direction: column;
-		margin-left: -0.045em;
+		overflow: visible;
 	}
-	.l2 {
-		color: var(--ink);
-		position: relative;
+	.line {
+		display: block;
+		white-space: nowrap;
 	}
-	.noise {
-		position: absolute;
-		inset: 0;
-		width: 100%;
-		height: 100%;
+	.line-2 {
+		display: block;
 	}
-	.stage {
-		position: absolute;
-		inset: 0;
-		pointer-events: none;
+	.glyph {
+		display: inline-block;
+		will-change: transform;
+		transition: none;
+	}
+	/* Never hide the name: it is the LCP element and it must survive no-JS.
+	   The entrance is transform-only, so content is visible at every frame. */
+	.name.ready .glyph {
+		animation: glyph-in 620ms var(--ease-draw) both;
+		animation-delay: calc(var(--i) * 18ms);
+	}
+	@keyframes glyph-in {
+		from {
+			transform: translateY(0.1em) scaleY(0.96);
+		}
+		to {
+			transform: none;
+		}
 	}
 	.hero-side {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-5);
-		padding-top: var(--s-6);
+		gap: var(--s-4);
+		padding: var(--s-5);
+		/* opaque plate: the copy never sits directly on the living layer */
+		background: var(--ground);
+		border-left: var(--hair) solid var(--line);
 	}
 	.lede {
 		font-size: var(--text-body);
-		line-height: 1.62;
-		max-width: 42ch;
+		line-height: 1.6;
+		max-width: 40ch;
 		color: var(--ink-2);
 	}
 	.aliases {
@@ -215,6 +251,7 @@ onMount(() => {
 		display: flex;
 		gap: var(--s-3);
 		flex-wrap: wrap;
+		margin-top: var(--s-2);
 	}
 	.cta {
 		display: inline-flex;
@@ -243,9 +280,7 @@ onMount(() => {
 		background: transparent;
 		color: var(--ink);
 	}
-	.cta.ghost:hover {
-		background: var(--ground-raised);
-	}
+	.cta.ghost:hover,
 	.cta:hover {
 		background: var(--accent);
 		color: var(--accent-ink);
@@ -253,10 +288,11 @@ onMount(() => {
 	}
 	.strip-wrap {
 		position: relative;
-		margin-top: var(--s-8);
+		margin-top: var(--s-7);
 		padding-top: 34px;
 	}
 	.portstrip {
+		background: var(--ground);
 		list-style: none;
 		display: grid;
 		grid-template-columns: repeat(5, minmax(0, 1fr));
@@ -266,7 +302,7 @@ onMount(() => {
 		border-top: var(--hair) solid var(--line);
 	}
 	.port {
-		padding: var(--s-4) var(--s-3) var(--s-4) 0;
+		padding: var(--s-3) var(--s-3) var(--s-3) 0;
 		border-right: var(--hair) solid var(--line);
 		display: flex;
 		flex-direction: column;
@@ -286,9 +322,23 @@ onMount(() => {
 		color: var(--ink-3);
 		line-height: 1.35;
 	}
+	.hero-foot {
+		background: var(--ground);
+		padding: var(--s-3) 0 var(--s-6);
+		display: flex;
+		justify-content: space-between;
+		gap: var(--s-4);
+		padding-top: var(--s-3);
+		color: var(--ink-3);
+	}
+	.hero-foot b {
+		color: var(--accent);
+		font-weight: 600;
+	}
 	@media (max-width: 1023px) {
 		.hero-grid {
 			grid-template-columns: 1fr;
+			gap: var(--s-5);
 		}
 		.hero-side {
 			padding-top: 0;
@@ -305,10 +355,15 @@ onMount(() => {
 	}
 	@media (max-width: 480px) {
 		.name {
-			font-size: clamp(3rem, 17vw, 5rem);
+			font-size: clamp(2.9rem, 16vw, 5rem);
 		}
 		.aliases {
 			grid-template-columns: 1fr;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.name.ready .glyph {
+			animation: none;
 		}
 	}
 </style>

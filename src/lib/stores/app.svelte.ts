@@ -1,5 +1,7 @@
 /** Shared client state. Storage access is always guarded — the site must work without it. */
 
+import { detectTier, stepDown, type Tier } from '$lib/fx/quality';
+
 const KEY_MODE = 'nex.mode';
 const KEY_FOUND = 'nex.found';
 const KEY_SEEN = 'nex.seen';
@@ -37,6 +39,12 @@ export const app = $state({
 	sound: false,
 	indexOpen: false,
 	ready: false,
+	tier: 'low' as Tier,
+	scrollVelocity: 0,
+	packets: 0,
+	section: 'home',
+	characterAt: { x: -100, y: -100 },
+	konami: false
 });
 
 export function hydrate(): void {
@@ -45,7 +53,12 @@ export function hydrate(): void {
 	if (mode === 'negative' || mode === 'light') app.mode = mode;
 	app.found = parseFound(read(KEY_FOUND));
 	app.introSeen = read(KEY_SEEN) === '1';
+	app.tier = detectTier();
 	app.ready = true;
+}
+
+export function downgradeTier(): void {
+	app.tier = stepDown(app.tier);
 }
 
 export function setMode(mode: 'light' | 'negative'): void {
@@ -66,6 +79,10 @@ export function addFound(id: string): void {
 	if (app.found.includes(id)) return;
 	app.found = [...app.found, id];
 	write(KEY_FOUND, JSON.stringify(app.found));
+}
+
+export function addPacket(): void {
+	app.packets += 1;
 }
 
 export function allFound(): boolean {

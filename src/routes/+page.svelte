@@ -85,6 +85,13 @@ const jsonLd = $derived(
 		position: relative;
 		padding-left: clamp(0px, 2vw, 32px);
 	}
+	/* The GL layer lives behind the sheet. Only the hero is transparent, so the heat and
+	   network passes can never sit behind body copy. */
+	.body :global(section),
+	.body :global(.contact-wrap),
+	.body :global(.tp-wrap) {
+		background: var(--ground);
+	}
 	.contact-wrap {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);

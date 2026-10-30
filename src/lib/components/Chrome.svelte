@@ -1,12 +1,24 @@
 <script lang="ts">
 import { identity } from '$lib/content';
 import { tick } from '$lib/fx/audio';
+import { playRing } from '$lib/fx/ring';
 import { app, toggleMode } from '$lib/stores/app.svelte';
+import { prefersReducedMotion } from '$lib/fx/env';
 import Telemetry from './Telemetry.svelte';
 
-function onMode() {
+async function onMode(e: MouseEvent) {
+	const el = e.currentTarget as HTMLElement;
+	const r = el.getBoundingClientRect();
+	const x = r.left + r.width / 2;
+	const y = r.top + r.height / 2;
+	const cs = getComputedStyle(document.documentElement);
+	const ground = cs.getPropertyValue('--ground').trim() || '#ececec';
+	const accent = cs.getPropertyValue('--accent').trim() || '#a34817';
+
 	toggleMode();
 	if (app.sound) tick('tap');
+	if (prefersReducedMotion()) return;
+	await playRing({ x, y, ground, accent, duration: 520 });
 }
 function onSound() {
 	app.sound = !app.sound;

@@ -105,6 +105,70 @@ Six tokens, `CKT{...}`, stored only as SHA-256 digests in `src/lib/flags.ts`.
 Each is base64-encoded so no plaintext token exists in any build output. Verified with
 `grep -r "CKT{" build/` → no matches.
 
+## Redesign: Living Plotter Drawing
+
+Rebuilt from the REDESIGN-BRIEF. Identity preserved (sheet, hairline grid, P01-P05 rail, giant
+grotesk name, rust accent, both themes, telemetry, crosshair, index, six test points).
+
+### Dependencies added
+
+| Package | Why |
+|---|---|
+| `gsap` | One clock. GSAP's ticker is now the only rAF loop; the preloader timeline and all scroll choreography run on it. |
+| `lenis` | Smooth scroll, driven from the GSAP ticker (`autoRaf: false`) so there is still exactly one loop. |
+| `ogl` | The shared WebGL layer. 24 KB gz against Three's ~150, for two fullscreen passes. |
+
+Bundle after P0: **123.9 KB gz initial, 141.3 KB gz total** (budget 180 KB).
+
+### Architecture
+
+- `src/lib/fx/quality.ts` — `high | medium | low` from pointer, width, cores and memory. A
+  second-by-second FPS probe downgrades the tier if it averages under 50 for 2 s.
+  `?quality=high|medium|low` pins it for visual QA, where software GL would otherwise always
+  demote to `low` and hide every effect.
+- `src/lib/fx/driver.ts` — rewritten around GSAP's ticker. Lenis is stepped from it, the GL
+  layer renders from it, components subscribe with `onFrame()`. Still exactly one loop.
+- `src/lib/gl/layer.ts` — the single WebGL canvas, two passes (heat, network). The drawing
+  buffer is sized to the **hero band** rather than the viewport, so the layer physically cannot
+  paint over another section.
+- `src/lib/gl/shaders.ts` — GLSL. The 4×4 Bayer threshold is computed arithmetically: GLSL ES
+  1.00 rejects array constructors, which silently failed both shaders at first.
+
+### Creative decisions
+
+1. **Plotter preloader.** Counter 000→100, sheet border drawn with `stroke-dashoffset`, name
+   letterspacing collapsing from 0.4em, then a `clip-path` peel. Skippable by key or click,
+   once per session. It renders in the prerendered HTML, so the first paint is never blank.
+2. **Name physics.** Per-glyph spans, `gsap.quickTo` repulsion within a 190px radius, elastic
+   flick on click. Entrance is **transform-only** — the name is the LCP element and must never
+   be invisible, including with JS off.
+3. **Hero gutter.** The old layout let the "O" touch the intro paragraph. The name column is
+   now `1.42fr` against a `minmax(300px, 1fr)` copy column with a `clamp(32px, 5vw, 96px)` gap,
+   and the copy sits on its own opaque plate.
+4. **Cursor lens.** A thin rust ring with a short pixel trail. An earlier version used a
+   `backdrop-filter: invert()` disc; it read as a black blob over the name and was cut.
+5. **Portal ring.** Positive/Negative now wipes from the toggle's own centre: a circle expands
+   with a rust ring, 520ms, custom cubic-bezier. Reduced motion swaps instantly.
+
+### Cut, and why
+
+**The lava-lamp heat layer is disabled** (`USE_HEAT = false` in `gl/layer.ts`; the shader is
+kept and wired). Four tuning rounds — blob count, radius, smooth-min, coverage, gradient shape,
+band masking — still produced a uniform ordered-dither lattice over the name and the role line.
+A 1-bit dither at that scale has no mid-tones: it either prints a regular lattice or disappears.
+Fixing it properly means rendering at half resolution to a `RenderTarget` and upscaling with
+`NEAREST`, which is the next thing to try. Per the brief's own priority list, heat resolution is
+the first thing to drop, and legibility never drops.
+
+The hero network field remains: nodes, links and travelling packets in the hero band only,
+quiet in positive (ink at 50% alpha) and rust in negative.
+
+### Known gaps
+
+- Heat layer disabled, as above.
+- Character, portal transitions between sections, Lenis/ScrollTrigger choreography, fullscreen
+  case-file sheets, horizontal Record, 3D rack, test-point hunt, sound and Konami: P1–P3.
+
 ## Deployment
 
 Live at **https://fujimaruC.github.io/prototipe-A/** via GitHub Actions

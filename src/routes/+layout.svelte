@@ -4,12 +4,19 @@ import { onMount, type Snippet } from 'svelte';
 import { page } from '$app/state';
 import Chrome from '$lib/components/Chrome.svelte';
 import Crosshair from '$lib/components/Crosshair.svelte';
+import CursorLens from '$lib/components/CursorLens.svelte';
+import GlCanvas from '$lib/components/GlCanvas.svelte';
 import JumpIndex from '$lib/components/JumpIndex.svelte';
+import Preloader from '$lib/components/Preloader.svelte';
 import { startDriver, stopDriver } from '$lib/fx/driver';
 import { prefersReducedMotion } from '$lib/fx/env';
 import { app, hydrate, setMode } from '$lib/stores/app.svelte';
 
 let { children }: { children: Snippet } = $props();
+
+// Children mount before this component's onMount, so hydrate at module scope on the client;
+// otherwise app.ready is still false when GlCanvas/CursorLens first evaluate.
+if (typeof window !== 'undefined') hydrate();
 
 const KONAMI = [
 	'ArrowUp',
@@ -71,6 +78,10 @@ $effect(() => {
 
 <a class="skip" href="#main">Skip to content</a>
 <span hidden aria-hidden="true">Q0tUe3NoMTNsZF93NGxsfQ</span>
+
+<GlCanvas />
+<Preloader />
+<CursorLens />
 
 <div class="frame" class:glitch>
 	<span class="reg reg-tl" aria-hidden="true"></span>
@@ -140,6 +151,8 @@ $effect(() => {
 		}
 	}
 	.frame {
+		/* own stacking context: everything inside sits above the fixed GL canvas */
+		z-index: 1;
 		max-width: var(--sheet-max);
 		margin: 0 auto;
 		padding: 0 var(--gutter);

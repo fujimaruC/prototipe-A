@@ -35,3 +35,6 @@ vite.config.ts.timestamp-*
 # private: workspace rules + source brief (not part of the published site)
 CLAUDE.md
 PRD-sveltekit.md
+
+# owner instruction files: never published
+REDESIGN-BRIEF.md

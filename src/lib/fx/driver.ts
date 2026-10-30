@@ -1,22 +1,40 @@
 /**
- * One clock. Scroll progress + pointer position are written here and read by every consumer.
- * No component adds its own scroll listener or RAF loop.
+ * One clock. GSAP's ticker is the only rAF loop in the app; Lenis is driven from it and the
+ * GL layer renders from it. Components subscribe with onFrame() and never add their own loop.
  */
 
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Lenis from 'lenis';
 import { clamp } from './env';
 
 export interface DriverState {
-	scroll: number; // 0..1 through the document
-	y: number; // px
-	px: number; // pointer x, viewport
-	py: number; // pointer y, viewport
-	active: boolean; // pointer is over the document
+	scroll: number;
+	y: number;
+	px: number;
+	py: number;
+	active: boolean;
+	velocity: number;
+	time: number;
+	delta: number;
 }
 
-const state: DriverState = { scroll: 0, y: 0, px: -1, py: -1, active: false };
+const state: DriverState = {
+	scroll: 0,
+	y: 0,
+	px: -1,
+	py: -1,
+	active: false,
+	velocity: 0,
+	time: 0,
+	delta: 16.7
+};
 const listeners = new Set<(s: DriverState) => void>();
 let started = false;
-let raf = 0;
+let lenis: Lenis | null = null;
+let lastY = 0;
+let lastT = 0;
+let tick: ((time: number, delta: number) => void) | null = null;
 
 function measure(): void {
 	const max = document.documentElement.scrollHeight - window.innerHeight;
@@ -24,15 +42,16 @@ function measure(): void {
 	state.y = window.scrollY;
 }
 
-function frame(): void {
-	measure();
-	for (const fn of listeners) fn(state);
-	raf = requestAnimationFrame(frame);
-}
-
 export function startDriver(): void {
 	if (started || typeof window === 'undefined') return;
 	started = true;
+	gsap.registerPlugin(ScrollTrigger);
+
+	lenis = new Lenis({ autoRaf: false, duration: 1.05, smoothWheel: true });
+	lenis.on('scroll', () => {
+		ScrollTrigger.update();
+	});
+
 	window.addEventListener(
 		'pointermove',
 		(e) => {
@@ -40,19 +59,38 @@ export function startDriver(): void {
 			state.py = e.clientY;
 			state.active = true;
 		},
-		{ passive: true },
+		{ passive: true }
 	);
 	document.addEventListener('pointerleave', () => {
 		state.active = false;
 	});
+
 	measure();
-	raf = requestAnimationFrame(frame);
+	lastY = state.y;
+	gsap.ticker.lagSmoothing(0);
+	tick = (time: number, delta: number) => {
+		lenis?.raf(time * 1000);
+		measure();
+		state.delta = delta;
+		state.time = time;
+		state.velocity = state.y - lastY;
+		lastY = state.y;
+		lastT = time;
+		for (const fn of listeners) fn(state);
+	};
+	gsap.ticker.add(tick);
 }
 
 export function stopDriver(): void {
 	if (!started) return;
 	started = false;
-	cancelAnimationFrame(raf);
+	if (tick) gsap.ticker.remove(tick);
+	lenis?.destroy();
+	lenis = null;
+}
+
+export function getLenis(): Lenis | null {
+	return lenis;
 }
 
 export function onFrame(fn: (s: DriverState) => void): () => void {
@@ -62,4 +100,8 @@ export function onFrame(fn: (s: DriverState) => void): () => void {
 
 export function snapshot(): DriverState {
 	return state;
+}
+
+export function lastTime(): number {
+	return lastT;
 }
