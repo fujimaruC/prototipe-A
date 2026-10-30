@@ -222,6 +222,16 @@ export const contact: Contact = {
 	availability: 'Open to freelance and remote work. Fastest reply is email.'
 };
 
+/** One line per section, shown by the character. Facts only, nothing it cannot know. */
+export const bubbles: Record<string, string> = {
+	home: 'Rack is up. Scroll when ready.',
+	profile: 'Three years of Arch, still rebuilding the lab.',
+	cases: 'One write-up is real. The rest are still slots.',
+	record: 'Provincial first, nationals qualified. Result pending.',
+	stack: 'Arch and RouterOS, both in daily use.',
+	contact: 'Email is not published yet. GitHub works.'
+};
+
 export const secret = {
 	heading: 'Every port accounted for',
 	lede: 'You traced all six test points. This page is not on the drawing.',

@@ -44,6 +44,7 @@ export const app = $state({
 	packets: 0,
 	section: 'home',
 	characterAt: { x: -100, y: -100 },
+	characterMood: 'idle' as 'idle' | 'walk' | 'sit' | 'fall' | 'drag' | 'react',
 	konami: false
 });
 

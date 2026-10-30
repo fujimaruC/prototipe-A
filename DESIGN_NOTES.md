@@ -193,6 +193,60 @@ scanline sweep, and the sweep is removed under reduced motion.
 - Case files open as an inline spring panel, not yet a fullscreen FLIP sheet.
 - Character, horizontal Record, 3D rack, test-point hunt, sound and Konami: P2–P3.
 
+## P2: character, record journey, rack
+
+### Fujimaru
+
+Variant A of three prototyped on a temporary `/sprite-test` page (deleted after the pick):
+balanced posture, crosshair visor, RJ45 tail. Chosen because it stays readable at 24px, where
+B's visor band collapsed and C's wire loop turned to noise. Defined in code as a 24-character
+string grid (`src/lib/character/sprite.ts`), three frames: idle, blink, walk.
+
+Movement lives in `src/lib/character/engine.ts`. Platforms are elements tagged `data-platform`
+(headings, case rows). The engine:
+
+- caches platform top edges and text rects, and **rejects any platform whose top edge has no
+  x-position where the sprite covers no text** — that is what enforces "never covers text";
+- walks for short hops (<220px) and portals for long ones, both on GSAP so there is still one
+  ticker;
+- settles only when scroll velocity returns to zero after having been non-zero, which was the
+  bug in the first pass (it never re-seated after an instant `scrollIntoView`);
+- drags and throws with GSAP `x/y`, never `style.transform` — writing the raw transform fought
+  the scale/opacity tweens and snapped the sprite to the origin mid-portal.
+
+Speech bubbles are one line per section, from `bubbles` in `content.ts`. `bubbleFor()` walks up
+to the nearest *id'd* section: `closest('section, header')` matched a wrapper with an empty id
+and resolved every line to the home copy.
+
+Hidden below 640px, under reduced motion, and on the low tier. `aria-hidden`, `pointer-events`
+only on the sprite.
+
+### Record
+
+Pinned horizontal journey: five stops left to right, path drawn across the same span, nodes
+popping as the scrub advances. The accessible source of truth stays a real `<table class="sr-only">`;
+the journey is `aria-hidden` decoration over it. Under 900px or reduced motion the pin is not
+built at all and a horizontal strip renders instead.
+
+Two fixes worth recording: `containerAnimation` never fires for a pinned horizontal tween, so
+node pops are keyed to the master timeline's progress instead; and the first node is set visible
+before any scrub, because a pinned section must never open on an empty stage.
+
+### Stack
+
+CSS 3D rack rather than WebGL: a second GL context would break the one-canvas rule, and the
+shared layer's buffer is sized to the hero band. Perspective plus `translateZ` on hover gives the
+same read for no extra bundle, and degrades to a flat rack.
+
+The rack is `aria-hidden` decoration; the legend beside it holds the real controls (`<button>`
+with `aria-expanded`/`aria-controls`) and the tool lists are always present as text, so nothing
+is hover-only. An earlier version put buttons inside the `aria-hidden` rack, which axe flagged as
+`aria-hidden-focus`; dimming inactive legend entries with `opacity` also pushed the unit labels
+under 4.5:1. Both removed.
+
+Bundle: **128.5 KB gz initial, 146.3 KB gz total** (budget 180).
+
+
 ## Deployment
 
 Live at **https://fujimaruC.github.io/prototipe-A/** via GitHub Actions

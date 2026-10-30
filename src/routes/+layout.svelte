@@ -2,6 +2,7 @@
 import '$lib/styles/tokens.css';
 import { onMount, type Snippet } from 'svelte';
 import { page } from '$app/state';
+import Character from '$lib/components/Character.svelte';
 import Chrome from '$lib/components/Chrome.svelte';
 import Crosshair from '$lib/components/Crosshair.svelte';
 import CursorLens from '$lib/components/CursorLens.svelte';
@@ -82,6 +83,7 @@ $effect(() => {
 <GlCanvas />
 <Preloader />
 <CursorLens />
+<Character />
 
 <div class="frame" class:glitch>
 	<span class="reg reg-tl" aria-hidden="true"></span>

@@ -89,7 +89,7 @@
 	<div class="hero-grid">
 		<div class="name-block">
 			<p class="mono role">{identity.role}</p>
-			<h1 class="name" bind:this={nameEl} class:ready>
+			<h1 class="name" data-platform bind:this={nameEl} class:ready>
 				<span class="line" aria-hidden="true">
 					{#each [...identity.first] as ch, i (i)}
 						<span class="glyph" style:--i={i}>{ch}</span>

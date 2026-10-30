@@ -2,9 +2,9 @@
 import { about } from '$lib/content';
 </script>
 
-<section data-reveal data-skew class="profile" id="profile" aria-labelledby="profile-h">
+<section data-reveal class="profile" id="profile" aria-labelledby="profile-h">
 	<header class="head">
-		<h2 data-reveal-head id="profile-h" class="display">{about.heading}</h2>
+		<h2 data-reveal-head data-skew data-platform id="profile-h" class="display">{about.heading}</h2>
 	</header>
 	<div class="cols">
 		<div class="prose">

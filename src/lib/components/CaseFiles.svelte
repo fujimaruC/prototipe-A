@@ -60,9 +60,9 @@ const statusLabel: Record<CaseFile['status'], string> = {
 };
 </script>
 
-<section data-reveal data-skew class="cases" id="cases" aria-labelledby="cases-h">
+<section data-reveal class="cases" id="cases" aria-labelledby="cases-h">
 	<header class="head">
-		<h2 data-reveal-head id="cases-h" class="display">Case files</h2>
+		<h2 data-reveal-head data-skew data-platform id="cases-h" class="display">Case files</h2>
 		<p data-reveal-meta class="intro">
 			Work on the record. One entry is written up; the rest are marked as drafts until the build notes are
 			in. Nothing here is scored for effect.
@@ -72,7 +72,7 @@ const statusLabel: Record<CaseFile['status'], string> = {
 	<div class="board" role="list">
 		{#each caseFiles as file, i (file.id)}
 			{@const isOpen = open === file.id}
-			<div class="row" class:open={isOpen} role="listitem" data-frame={file.id}>
+			<div class="row" class:open={isOpen} role="listitem" data-platform data-frame={file.id}>
 				<button
 					class="summary"
 					aria-expanded={isOpen}

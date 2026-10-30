@@ -15,9 +15,9 @@ async function copy() {
 }
 </script>
 
-<section data-reveal data-skew class="contact" id="contact" aria-labelledby="contact-h">
+<section data-reveal class="contact" id="contact" aria-labelledby="contact-h">
 	<div class="inner">
-		<h2 data-reveal-head id="contact-h" class="display">Open a line</h2>
+		<h2 data-reveal-head data-skew data-platform id="contact-h" class="display">Open a line</h2>
 		<p data-reveal-meta class="avail">{contact.availability}</p>
 
 		<div class="line">

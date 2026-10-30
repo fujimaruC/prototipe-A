@@ -11,3 +11,9 @@ declare global {
 }
 
 export {};
+
+declare global {
+	interface Window {
+		__fujimaru?: { summon: () => void; platforms: () => unknown[] };
+	}
+}

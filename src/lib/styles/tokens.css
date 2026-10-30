@@ -117,6 +117,8 @@ html {
 
 body {
 	margin: 0;
+	/* containing block for document-space absolute layers (the character) */
+	position: relative;
 	min-height: 100dvh;
 	overflow-x: clip;
 	background: var(--ground);

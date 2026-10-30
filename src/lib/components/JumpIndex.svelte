@@ -62,6 +62,11 @@ function choose(id: string, origin?: { x: number; y: number }) {
 	el.setAttribute('tabindex', '-1');
 	el.focus({ preventScroll: true });
 }
+function summonCharacter() {
+	close();
+	window.__fujimaru?.summon();
+}
+
 function onKey(e: KeyboardEvent) {
 	if (e.key === 'ArrowDown') {
 		e.preventDefault();
@@ -118,6 +123,9 @@ function onKey(e: KeyboardEvent) {
 				spellcheck="false"
 			/>
 		</label>
+		<button class="summon mono--micro" onclick={summonCharacter}>
+			<span>↳</span> summon fujimaru
+		</button>
 		<ul class="list" role="listbox" aria-label="Sections" tabindex="-1">
 			{#each filtered as e, i (e.id)}
 				<li role="option" aria-selected={i === selected}>
@@ -202,6 +210,21 @@ function onKey(e: KeyboardEvent) {
 	.field input:focus-visible {
 		outline: 2px solid var(--accent);
 		outline-offset: -2px;
+	}
+	.summon {
+		display: flex;
+		align-items: center;
+		gap: var(--s-2);
+		width: 100%;
+		min-height: 44px;
+		padding: 0 var(--s-4);
+		border-bottom: var(--hair) solid var(--line);
+		color: var(--accent);
+		text-align: left;
+	}
+	.summon:hover {
+		background: var(--accent);
+		color: var(--accent-ink);
 	}
 	.list {
 		list-style: none;
