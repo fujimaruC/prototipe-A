@@ -164,13 +164,16 @@ export function createCharacter({
 	const nearest = (): Platform | null => {
 		if (platforms.length === 0) return null;
 		const vh = window.innerHeight;
-		const centre = window.scrollY + vh * 0.5;
+		const top = window.scrollY;
+		const bottom = top + vh;
+		const centre = top + vh * 0.5;
 		let best: Platform | null = null;
 		let bestScore = Infinity;
 		for (const p of platforms) {
-			// prefer platforms inside the viewport, then the one nearest the centre
-			const onScreen = p.top > window.scrollY - spriteH && p.top < window.scrollY + vh;
-			const score = Math.abs(p.top - centre) + (onScreen ? 0 : vh * 2);
+			// The platform's top edge must be inside the viewport, with room for the sprite
+			// above it. A platform below the fold put the sprite and its bubble off-screen.
+			if (p.top < top + spriteH + 8 || p.top > bottom - 8) continue;
+			const score = Math.abs(p.top - centre);
 			if (score < bestScore) {
 				bestScore = score;
 				best = p;
@@ -314,10 +317,18 @@ export function createCharacter({
 		}
 	});
 
-	// initial placement
+	// initial placement, then once more after webfonts settle the layout
 	const first = nearest();
 	if (first) standOn(first);
-	else place(window.innerWidth * 0.6, window.innerHeight * 0.5);
+	else place(window.innerWidth * 0.6, window.scrollY + window.innerHeight * 0.5);
+
+	if (document.fonts?.ready) {
+		void document.fonts.ready.then(() => {
+			platforms = readPlatforms(scale);
+			const settled = nearest();
+			if (settled) standOn(settled);
+		});
+	}
 
 	// blink
 	const blink = () => {
