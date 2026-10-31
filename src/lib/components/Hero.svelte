@@ -67,8 +67,9 @@
 		};
 
 		const onClick = (e: PointerEvent) => {
-			const target = e.target as HTMLElement;
-			const glyph = target.closest<HTMLElement>('.glyph');
+			// e.target can be window/document/a text node, none of which have closest().
+			const target = e.target instanceof Element ? e.target : null;
+			const glyph = target?.closest<HTMLElement>('.glyph') ?? null;
 			if (!glyph) return;
 			gsap.fromTo(
 				glyph,

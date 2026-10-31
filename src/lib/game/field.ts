@@ -122,7 +122,7 @@ export function createField({ canvas, onCollect, maxNodes = 14 }: FieldOptions):
 			if (!a || !b) continue;
 			const x = a.x + (b.x - a.x) * p.t;
 			const y = a.y + (b.y - a.y) * p.t;
-			ctx.fillRect(x - 2.5, y - 2.5, 5, 5);
+			ctx.fillRect(x - 3, y - 3, 6, 6);
 		}
 
 		raf = requestAnimationFrame(draw);
@@ -146,8 +146,8 @@ export function createField({ canvas, onCollect, maxNodes = 14 }: FieldOptions):
 	raf = requestAnimationFrame(draw);
 
 	const spawnTimer = window.setInterval(() => {
-		if (running && packets.length < 14) spawn();
-	}, 300);
+		if (running && packets.length < 18) spawn();
+	}, 220);
 
 	// theme changes swap the palette without rebuilding the field
 	const mo = new MutationObserver(() => {
@@ -169,7 +169,7 @@ export function createField({ canvas, onCollect, maxNodes = 14 }: FieldOptions):
 			const x = clientX - rect.left;
 			const y = clientY - rect.top;
 			// generous radius: a finger is not a mouse
-			const hit = 34;
+			const hit = 46;
 			let bestIdx = -1;
 			let bestDist = Infinity;
 			for (let i = 0; i < packets.length; i++) {

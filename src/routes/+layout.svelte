@@ -46,7 +46,8 @@ onMount(() => {
 	if (!prefersReducedMotion()) startDriver();
 
 	const onKey = (e: KeyboardEvent) => {
-		const target = e.target as HTMLElement | null;
+		// Guarded: a synthetic or window-targeted key/pointer event has no tagName semantics.
+		const target = e.target instanceof HTMLElement ? e.target : null;
 		const typing =
 			target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable);
 

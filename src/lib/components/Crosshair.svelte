@@ -17,7 +17,9 @@ onMount(() => {
 	const onMove = (e: PointerEvent) => {
 		x = e.clientX;
 		y = e.clientY;
-		const target = (e.target as Element | null)?.closest('[data-frame]');
+		// e.target is not guaranteed to be an Element (window, document, text nodes), and
+		// closest() only exists on Elements. Guard instead of trusting the cast.
+		const target = e.target instanceof Element ? e.target.closest('[data-frame]') : null;
 		lock = target?.getAttribute('data-frame') ?? '';
 	};
 	window.addEventListener('pointermove', onMove, { passive: true });
