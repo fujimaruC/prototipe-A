@@ -14,6 +14,8 @@
 	let canvas: HTMLCanvasElement | undefined = $state();
 	let handle: FieldHandle | null = null;
 	let pops = $state<{ id: number; x: number; y: number; n: number }[]>([]);
+	// Phones have no visible field: do not render a canvas that will never animate.
+	let showCanvas = $state(false);
 	let popId = 1;
 	let comboDrop = 0;
 
@@ -24,40 +26,51 @@
 	}
 
 	onMount(() => {
-		if (!canvas) return;
 		if (prefersReducedMotion()) return;
 		// Phones: the canvas sits behind the opaque copy plate, so nothing is ever visible.
 		// The dock's Grab button is the touch mechanic; do not run a hidden render loop.
 		if (window.innerWidth < 768) return;
 
-		handle = createField({
-			canvas,
-			maxNodes: app.tier === 'low' ? 8 : 14,
-			onCollect: (x, y) => {
-				const { unlocks, levelUp } = addPackets(1);
-				pop(x, y, 1);
-				if (app.sound) sfx('found');
-				if (levelUp && !unlocks.some((u) => u.levelUp)) {
-					// Level crossed purely from packet XP (no achievement in the same click)
-					pushAchievement({ id: 'lvl', label: `Level ${game.level}`, detail: 'The sheet revises itself.', xp: 0 }, true);
+		// The canvas only exists once showCanvas is true, so build the field on the next frame.
+		showCanvas = true;
+		let frame = 0;
+		let onPointer: ((e: PointerEvent) => void) | null = null;
+
+		frame = requestAnimationFrame(() => {
+			if (!canvas) return;
+			handle = createField({
+				canvas,
+				maxNodes: app.tier === 'low' ? 8 : 14,
+				onCollect: (x, y) => {
+					const { unlocks, levelUp } = addPackets(1);
+					pop(x, y, 1);
+					if (app.sound) sfx('found');
+					if (levelUp && !unlocks.some((u) => u.levelUp)) {
+						// Level crossed purely from packet XP (no achievement in the same click)
+						pushAchievement(
+							{ id: 'lvl', label: `Level ${game.level}`, detail: 'The sheet revises itself.', xp: 0 },
+							true
+						);
+					}
+					for (const u of unlocks) pushAchievement(u.achievement, u.levelUp);
+					window.clearTimeout(comboDrop);
+					comboDrop = window.setTimeout(resetCombo, 2400);
 				}
-				for (const u of unlocks) pushAchievement(u.achievement, u.levelUp);
-				window.clearTimeout(comboDrop);
-				comboDrop = window.setTimeout(resetCombo, 2400);
-			}
+			});
+
+			// one delegated listener: the canvas is behind the copy, so the hero handles the tap
+			onPointer = (e: PointerEvent) => {
+				const rect = canvas?.getBoundingClientRect();
+				if (!rect) return;
+				if (e.clientY < rect.top || e.clientY > rect.bottom) return;
+				handle?.tryCollect(e.clientX, e.clientY);
+			};
+			window.addEventListener('pointerdown', onPointer);
 		});
 
-		// one delegated listener: the canvas is behind the copy, so the hero handles the tap
-		const onPointer = (e: PointerEvent) => {
-			const rect = canvas?.getBoundingClientRect();
-			if (!rect) return;
-			if (e.clientY < rect.top || e.clientY > rect.bottom) return;
-			handle?.tryCollect(e.clientX, e.clientY);
-		};
-		window.addEventListener('pointerdown', onPointer);
-
 		return () => {
-			window.removeEventListener('pointerdown', onPointer);
+			cancelAnimationFrame(frame);
+			if (onPointer) window.removeEventListener('pointerdown', onPointer);
 			window.clearTimeout(comboDrop);
 			// A combo must not survive the field: without this, leaving the hero mid-combo and
 			// returning let the next single packet complete "five in one window".
@@ -68,7 +81,9 @@
 </script>
 
 <div class="field" aria-hidden="true">
-	<canvas bind:this={canvas}></canvas>
+	{#if showCanvas}
+		<canvas bind:this={canvas}></canvas>
+	{/if}
 	{#each pops as p (p.id)}
 		<span class="pop mono--micro" style:left="{p.x}px" style:top="{p.y}px">+{p.n}</span>
 	{/each}
