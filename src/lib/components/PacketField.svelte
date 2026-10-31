@@ -26,6 +26,9 @@
 	onMount(() => {
 		if (!canvas) return;
 		if (prefersReducedMotion()) return;
+		// Phones: the canvas sits behind the opaque copy plate, so nothing is ever visible.
+		// The dock's Grab button is the touch mechanic; do not run a hidden render loop.
+		if (window.innerWidth < 768) return;
 
 		handle = createField({
 			canvas,
@@ -103,7 +106,7 @@
 			transform: translate(-50%, -160%) scale(1.15);
 		}
 	}
-	@media (prefers-reduced-motion: reduce) {
+	@media (max-width: 767px), (prefers-reduced-motion: reduce) {
 		.field {
 			display: none;
 		}

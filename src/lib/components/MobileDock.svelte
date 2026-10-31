@@ -3,13 +3,14 @@
 	 * Phone-only action dock. The desktop chrome has room for mode/sound/index; a phone does
 	 * not, so the dock carries the primary actions plus the game state. Touch targets are 48px.
 	 */
-	import { app, toggleMode } from '$lib/stores/app.svelte';
-	import { game, progress, unlock } from '$lib/game/state.svelte';
-import { pushAchievement } from '$lib/game/toasts.svelte';
-	import { tick as sfx } from '$lib/fx/audio';
 	import { resolve } from '$app/paths';
+	import { tick as sfx } from '$lib/fx/audio';
+	import { addPackets, game, progress, resetCombo, unlock } from '$lib/game/state.svelte';
+	import { pushAchievement } from '$lib/game/toasts.svelte';
+	import { app, toggleMode } from '$lib/stores/app.svelte';
 
 	const pct = $derived(Math.round(progress() * 100));
+	let grabTimer = 0;
 
 	function mode() {
 		toggleMode();
@@ -21,6 +22,21 @@ import { pushAchievement } from '$lib/game/toasts.svelte';
 		app.sound = !app.sound;
 		if (app.sound) sfx('tap');
 	}
+	/**
+	 * Thumb-reach play: one tap collects a packet without having to hit a moving 9px target.
+	 * Phones get this instead of a harder version of the desktop field.
+	 */
+	function grab() {
+		const { unlocks, levelUp } = addPackets(1);
+		if (app.sound) sfx('found');
+		if (levelUp && !unlocks.some((u) => u.levelUp)) {
+			pushAchievement({ id: 'lvl', label: `Level ${game.level}`, detail: 'The sheet revises itself.', xp: 0 }, true);
+		}
+		for (const u of unlocks) pushAchievement(u.achievement, u.levelUp);
+		window.clearTimeout(grabTimer);
+		grabTimer = window.setTimeout(resetCombo, 2400);
+	}
+
 	function index() {
 		app.indexOpen = true;
 		const u = unlock('index');
@@ -30,6 +46,11 @@ import { pushAchievement } from '$lib/game/toasts.svelte';
 </script>
 
 <nav class="dock" aria-label="Quick actions">
+	<button class="act grab" onclick={grab}>
+		<span class="ico" aria-hidden="true">＋</span>
+		<span class="lbl mono--micro">Grab</span>
+		<span class="sr-only">, collect a packet</span>
+	</button>
 	<button class="act" onclick={index}>
 		<span class="ico" aria-hidden="true">⌗</span>
 		<span class="lbl mono--micro">Index</span>
@@ -65,7 +86,7 @@ import { pushAchievement } from '$lib/game/toasts.svelte';
 	@media (max-width: 767px) {
 		.dock {
 			display: grid;
-			grid-template-columns: repeat(4, 1fr) auto;
+			grid-template-columns: repeat(5, 1fr) auto;
 			align-items: stretch;
 			position: fixed;
 			left: 0;
@@ -90,6 +111,19 @@ import { pushAchievement } from '$lib/game/toasts.svelte';
 		border-right: var(--hair) solid var(--line);
 		background: var(--ground);
 		transition: background-color 120ms var(--ease-draw), color 120ms var(--ease-draw);
+	}
+	/* Reads as a button, not a selected tab: accent glyph, paper fill, no inset rule. */
+	.grab {
+		background: var(--ground);
+		color: var(--accent);
+	}
+	.grab .ico {
+		font-size: 17px;
+		font-weight: 700;
+	}
+	.grab:active {
+		background: var(--accent);
+		color: var(--accent-ink);
 	}
 	.act:active,
 	.act[aria-pressed='true'] {

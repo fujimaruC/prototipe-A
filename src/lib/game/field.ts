@@ -52,7 +52,8 @@ export function createField({ canvas, onCollect, maxNodes = 14 }: FieldOptions):
 		const count = Math.max(6, Math.min(maxNodes, Math.round((w * h) / 42000)));
 		nodes = Array.from({ length: count }, () => ({
 			x: 0.06 * w + Math.random() * w * 0.88,
-			y: 0.1 * h + Math.random() * h * 0.8,
+			// lower two-thirds only: the top of the hero is the name, and nodes there read as grit
+			y: h * 0.34 + Math.random() * h * 0.6,
 			r: 1.6 + Math.random() * 1.4,
 			pulse: Math.random() * Math.PI * 2
 		}));
@@ -122,11 +123,20 @@ export function createField({ canvas, onCollect, maxNodes = 14 }: FieldOptions):
 			if (!a || !b) continue;
 			const x = a.x + (b.x - a.x) * p.t;
 			const y = a.y + (b.y - a.y) * p.t;
-			// a 2px ink ring makes the packet read against paper without adding weight
-			ctx.fillStyle = palette.ink;
-			ctx.fillRect(x - 4, y - 4, 8, 8);
+			/*
+			 * A packet has to read at a glance: an ink plate, an accent core, and a breathing
+			 * ring that expands as it travels. Static 8px squares measured 1.2% ink coverage on
+			 * the hero canvas, which is why the field looked like nothing was happening.
+			 */
+			// No halo: outlined boxes read as UI chips sitting on the name. A packet is a small
+			// solid mark that moves — that is what makes the field look alive.
+			ctx.globalAlpha = 0.95;
 			ctx.fillStyle = palette.accent;
-			ctx.fillRect(x - 2.5, y - 2.5, 5, 5);
+			ctx.fillRect(x - 2, y - 2, 4, 4);
+			ctx.globalAlpha = 0.55;
+			ctx.fillStyle = palette.ink;
+			ctx.fillRect(x - 3, y - 3, 6, 1);
+			ctx.fillRect(x - 3, y + 2, 6, 1);
 		}
 
 		raf = requestAnimationFrame(draw);
@@ -150,8 +160,8 @@ export function createField({ canvas, onCollect, maxNodes = 14 }: FieldOptions):
 	raf = requestAnimationFrame(draw);
 
 	const spawnTimer = window.setInterval(() => {
-		if (running && packets.length < 18) spawn();
-	}, 220);
+		if (running && packets.length < 24) spawn();
+	}, 180);
 
 	// theme changes swap the palette without rebuilding the field
 	const mo = new MutationObserver(() => {

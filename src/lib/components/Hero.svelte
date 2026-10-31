@@ -150,9 +150,10 @@
 	</div>
 
 	<div class="hero-foot">
-		<span class="mono--micro">{reduced ? 'REDUCED MOTION // FIELD OFF' : 'TAP A PACKET'} <b>+XP</b></span>
+		<span class="mono--micro desk-only">{reduced ? 'REDUCED MOTION // FIELD OFF' : 'TAP A PACKET'} <b>+XP</b></span>
+		<span class="mono--micro mobile-only">USE <b>GRAB</b> BELOW</span>
 		<TestMarker id="TP-05" />
-		<span class="mono--micro hide-sm">CLICK THE FIELD</span>
+		<span class="mono--micro desk-only">CLICK THE FIELD</span>
 	</div>
 </header>
 
@@ -367,6 +368,17 @@
 		font-size: 0.72rem;
 		color: var(--ink-3);
 		line-height: 1.35;
+	}
+	.mobile-only {
+		display: none;
+	}
+	@media (max-width: 767px) {
+		.desk-only {
+			display: none;
+		}
+		.mobile-only {
+			display: inline;
+		}
 	}
 	.hero-foot {
 		position: relative;
