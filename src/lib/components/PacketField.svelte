@@ -77,6 +77,7 @@
 		inset: 0;
 		pointer-events: none;
 		z-index: 0;
+		cursor: crosshair;
 	}
 	canvas {
 		display: block;

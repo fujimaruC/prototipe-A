@@ -86,7 +86,7 @@ export function createField({ canvas, onCollect, maxNodes = 14 }: FieldOptions):
 
 		// links
 		ctx.strokeStyle = palette.ink;
-		ctx.globalAlpha = 0.26;
+		ctx.globalAlpha = 0.34;
 		ctx.lineWidth = 1;
 		for (let i = 0; i < nodes.length; i++) {
 			const a = nodes[i];
@@ -99,7 +99,7 @@ export function createField({ canvas, onCollect, maxNodes = 14 }: FieldOptions):
 		}
 
 		// nodes
-		ctx.globalAlpha = 0.72;
+		ctx.globalAlpha = 0.85;
 		for (const n of nodes) {
 			n.pulse += dt * 0.002;
 			ctx.fillStyle = palette.ink;
@@ -122,7 +122,11 @@ export function createField({ canvas, onCollect, maxNodes = 14 }: FieldOptions):
 			if (!a || !b) continue;
 			const x = a.x + (b.x - a.x) * p.t;
 			const y = a.y + (b.y - a.y) * p.t;
-			ctx.fillRect(x - 3, y - 3, 6, 6);
+			// a 2px ink ring makes the packet read against paper without adding weight
+			ctx.fillStyle = palette.ink;
+			ctx.fillRect(x - 4, y - 4, 8, 8);
+			ctx.fillStyle = palette.accent;
+			ctx.fillRect(x - 2.5, y - 2.5, 5, 5);
 		}
 
 		raf = requestAnimationFrame(draw);

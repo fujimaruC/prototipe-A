@@ -67,6 +67,7 @@
 		let handle: CharacterHandle | null = null;
 		let dragStart = { x: 0, y: 0, t: 0 };
 		let dragging = false;
+		let pressed = false;
 
 		// the engine needs the node after it is laid out
 		requestAnimationFrame(() => {
@@ -112,33 +113,49 @@
 			const r = host.getBoundingClientRect();
 			if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
 
-			// Tap = a reaction. Two quick taps get the hearts.
-			taps += 1;
-			window.clearTimeout(reactionTimer);
-			window.clearTimeout(blinkTimer);
-			frame = taps >= 2 ? 'love' : 'wave';
-			if (app.sound) sfx(taps >= 2 ? 'chime' : 'hover');
-			reactionTimer = window.setTimeout(() => {
-				frame = 'idle';
-				taps = 0;
-			}, 900);
-
-			dragging = true;
-			if (app.sound) sfx('scratch');
+			/*
+			 * A press is not a drag. Starting the drag on pointerdown meant every tap became a
+			 * throw, and the resulting walk overwrote the wave before it was ever visible.
+			 * Track the press, and only promote it to a drag once the pointer actually moves.
+			 */
+			pressed = true;
+			dragging = false;
 			dragStart = { x: e.clientX, y: e.clientY, t: performance.now() };
 			host.setPointerCapture(e.pointerId);
 			gsap.killTweensOf(host);
 		};
 
 		const onMove = (e: PointerEvent) => {
-			if (!dragging || !host) return;
+			if (!pressed || !host) return;
+			if (!dragging) {
+				// 6px of travel before this counts as a drag rather than a tap
+				const travelled = Math.hypot(e.clientX - dragStart.x, e.clientY - dragStart.y);
+				if (travelled < 6) return;
+				dragging = true;
+				if (app.sound) sfx('scratch');
+			}
 			// GSAP owns the transform. Writing style.transform here would be overwritten by the
 			// next tween and the sprite would jump back mid-drag.
 			gsap.set(host, { x: e.clientX - 24, y: e.clientY - 24 + window.scrollY });
 		};
 
 		const onUp = (e: PointerEvent) => {
-			if (!dragging || !host) return;
+			if (!pressed || !host) return;
+			pressed = false;
+
+			if (!dragging) {
+				// A tap: react, do not travel.
+				taps += 1;
+				window.clearTimeout(reactionTimer);
+				window.clearTimeout(blinkTimer);
+				frame = taps >= 2 ? 'love' : 'wave';
+				if (app.sound) sfx(taps >= 2 ? 'chime' : 'hover');
+				reactionTimer = window.setTimeout(() => {
+					frame = 'idle';
+					taps = 0;
+				}, 900);
+				return;
+			}
 			dragging = false;
 			const dt = Math.max(1, performance.now() - dragStart.t);
 			const vx = ((e.clientX - dragStart.x) / dt) * 1000;
@@ -183,7 +200,7 @@
 </script>
 
 {#if on}
-	<div class="fuji" bind:this={host} aria-hidden="true" data-mood={app.characterMood} class:shades={app.konami}>
+	<div class="fuji" bind:this={host} aria-hidden="true" data-mood={app.characterMood} data-frame={frame} class:shades={app.konami}>
 		<svg viewBox="0 0 24 24" width="48" height="48" role="presentation">
 			{#each rows as row, y (y)}
 				{#each [...row] as ch, x (x)}
