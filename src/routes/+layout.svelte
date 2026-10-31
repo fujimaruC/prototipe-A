@@ -8,16 +8,23 @@ import Crosshair from '$lib/components/Crosshair.svelte';
 import CursorLens from '$lib/components/CursorLens.svelte';
 import GlCanvas from '$lib/components/GlCanvas.svelte';
 import JumpIndex from '$lib/components/JumpIndex.svelte';
+import MobileDock from '$lib/components/MobileDock.svelte';
 import Preloader from '$lib/components/Preloader.svelte';
+import Toasts from '$lib/components/Toasts.svelte';
 import { startDriver, stopDriver } from '$lib/fx/driver';
 import { prefersReducedMotion } from '$lib/fx/env';
+import { hydrateGame, unlock } from '$lib/game/state.svelte';
+import { pushAchievement } from '$lib/game/toasts.svelte';
 import { app, hydrate, setMode } from '$lib/stores/app.svelte';
 
 let { children }: { children: Snippet } = $props();
 
 // Children mount before this component's onMount, so hydrate at module scope on the client;
 // otherwise app.ready is still false when GlCanvas/CursorLens first evaluate.
-if (typeof window !== 'undefined') hydrate();
+if (typeof window !== 'undefined') {
+	hydrate();
+	hydrateGame();
+}
 
 const KONAMI = [
 	'ArrowUp',
@@ -46,16 +53,23 @@ onMount(() => {
 		if (!typing && (e.key === '/' || e.key === '~') && !app.indexOpen) {
 			e.preventDefault();
 			app.indexOpen = true;
+			const u = unlock('index');
+			if (u) pushAchievement(u.achievement, u.levelUp);
 			return;
 		}
 		if (!typing && e.key.toLowerCase() === 'n' && e.altKey) {
 			e.preventDefault();
 			setMode(app.mode === 'light' ? 'negative' : 'light');
+			const u = unlock('invert');
+			if (u) pushAchievement(u.achievement, u.levelUp);
 		}
 
 		seq = [...seq, e.key].slice(-KONAMI.length);
 		if (seq.join('|').toLowerCase() === KONAMI.join('|').toLowerCase()) {
 			seq = [];
+			// Award achievement regardless of motion preferences
+			const u = unlock('konami');
+			if (u) pushAchievement(u.achievement, u.levelUp);
 			if (prefersReducedMotion()) return;
 			glitch = true;
 			app.konami = true;
@@ -113,6 +127,8 @@ $effect(() => {
 </div>
 
 <JumpIndex />
+<Toasts />
+<MobileDock />
 <Crosshair />
 
 <style>
@@ -180,6 +196,12 @@ $effect(() => {
 	main {
 		position: relative;
 		z-index: var(--z-sheet);
+	}
+	/* the mobile dock is fixed; reserve its height so it never covers the footer */
+	@media (max-width: 767px) {
+		main {
+			padding-bottom: 56px;
+		}
 	}
 	.foot {
 		display: flex;

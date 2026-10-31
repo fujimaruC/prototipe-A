@@ -10,14 +10,18 @@
 	import { createCharacter, characterEnabled, type CharacterHandle } from '$lib/character/engine';
 	import { bubbles } from '$lib/content';
 	import { tick as sfx } from '$lib/fx/audio';
-	import { FRAMES, PALETTE, type SpriteFrame } from '$lib/character/sprite';
+	import { FRAMES, type SpriteFrame } from '$lib/character/sprite';
 
 	let host: HTMLDivElement | undefined = $state();
 	let frame = $state<SpriteFrame>('idle');
 	let on = $state(false);
 	let bubble = $state('');
 	let flip = $state(false);
+	/** Right-aligned sprite: anchor the bubble to its right edge so it cannot leave the page. */
+	let anchorRight = $state(false);
 	let bubbleTimer = 0;
+	let reactionTimer = 0;
+	let taps = 0;
 
 	/** Which section is the character standing in? Read from the platform's nearest section. */
 	function bubbleFor(el: HTMLElement): string {
@@ -47,6 +51,7 @@
 		const r = host?.getBoundingClientRect();
 		const chromeBottom = document.querySelector('.chrome-wrap')?.getBoundingClientRect().bottom ?? 0;
 		flip = r ? r.top - chromeBottom < 72 : false;
+		anchorRight = r ? r.left + r.width / 2 > window.innerWidth / 2 : false;
 		bubble = text;
 		bubbleTimer = window.setTimeout(() => (bubble = ''), 4200);
 	}
@@ -56,7 +61,7 @@
 	onMount(() => {
 		// The sprite div only exists once `on` is true, so the eligibility check must not read
 		// `host` first: that is a deadlock (no host -> return -> never render -> no host).
-		if (!characterEnabled() || app.tier === 'low') return;
+		if (!characterEnabled()) return;
 		on = true;
 
 		let handle: CharacterHandle | null = null;
@@ -106,6 +111,18 @@
 			if (!host) return;
 			const r = host.getBoundingClientRect();
 			if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) return;
+
+			// Tap = a reaction. Two quick taps get the hearts.
+			taps += 1;
+			window.clearTimeout(reactionTimer);
+			window.clearTimeout(blinkTimer);
+			frame = taps >= 2 ? 'love' : 'wave';
+			if (app.sound) sfx(taps >= 2 ? 'chime' : 'hover');
+			reactionTimer = window.setTimeout(() => {
+				frame = 'idle';
+				taps = 0;
+			}, 900);
+
 			dragging = true;
 			if (app.sound) sfx('scratch');
 			dragStart = { x: e.clientX, y: e.clientY, t: performance.now() };
@@ -139,12 +156,24 @@
 			});
 		};
 
+		let blinkTimer = window.setTimeout(function blink() {
+			if (frame === 'idle') {
+				frame = 'blink';
+				window.setTimeout(() => {
+					if (frame === 'blink') frame = 'idle';
+				}, 140);
+			}
+			blinkTimer = window.setTimeout(blink, 2600 + Math.random() * 3400);
+		}, 2000);
+
 		window.addEventListener('pointerdown', onDown);
 		window.addEventListener('pointermove', onMove);
 		window.addEventListener('pointerup', onUp);
 
 		return () => {
 			window.clearTimeout(bubbleTimer);
+			window.clearTimeout(reactionTimer);
+			window.clearTimeout(blinkTimer);
 			window.removeEventListener('pointerdown', onDown);
 			window.removeEventListener('pointermove', onMove);
 			window.removeEventListener('pointerup', onUp);
@@ -171,7 +200,7 @@
 			{/each}
 		</svg>
 		{#if bubble}
-			<p class="bubble mono--micro" class:flip>{bubble}</p>
+			<p class="bubble mono--micro" class:flip class:right={anchorRight}>{bubble}</p>
 		{/if}
 	</div>
 {/if}
@@ -225,6 +254,14 @@
 		line-height: 1.35;
 		pointer-events: none;
 	}
+	.bubble.right {
+		left: auto;
+		right: 0;
+	}
+	.bubble.right::after {
+		left: auto;
+		right: 12px;
+	}
 	.bubble.flip {
 		bottom: auto;
 		top: calc(100% + 6px);
@@ -245,7 +282,16 @@
 	}
 	@media (max-width: 639px) {
 		.fuji {
-			display: none;
+			width: 40px;
+			height: 40px;
+		}
+		.fuji svg {
+			width: 40px;
+			height: 40px;
+		}
+		.bubble {
+			max-width: 60vw;
+			font-size: 10px;
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {

@@ -310,9 +310,57 @@ export function createCharacter({
 	 * to the centre if every candidate is occupied.
 	 */
 	const centreInStage = () => {
-		const y = window.scrollY + window.innerHeight * 0.5 - spriteH / 2;
-		const midX = window.innerWidth * 0.5 - spriteW / 2;
+		// Cache before any scan: both branches score against textRects, and an empty cache
+		// reports every position as clear.
 		cacheTextRects();
+		const y = window.scrollY + window.innerHeight * 0.5 - spriteH / 2;
+
+		/*
+		 * Narrow screens: the name spans the column and the copy fills everything under it, so
+		 * any fixed offset lands on text. Scan the viewport for the emptiest spot instead,
+		 * scoring the sprite box and the bubble box together, and preferring the lower half so
+		 * the avatar sits near the dock rather than over the headline.
+		 */
+		if (window.innerWidth < 768) {
+			const slot = document.querySelector<HTMLElement>('.fuji-slot');
+			if (slot) {
+				const r = slot.getBoundingClientRect();
+				// feet on the slot's bottom edge, right-aligned inside it
+				const sx = r.right - spriteW - 12;
+				const sy = r.bottom + window.scrollY - spriteH - 8;
+				place(sx, sy);
+				return;
+			}
+			const BUBBLE_H = 34;
+			const GAP = 8;
+			const main = document.querySelector('main')?.getBoundingClientRect();
+			const minX = (main?.left ?? 0) + 8;
+			const maxX = (main?.right ?? window.innerWidth) - spriteW - 8;
+			const chrome = document.querySelector('.chrome-wrap')?.getBoundingClientRect();
+			const minY = window.scrollY + (chrome?.bottom ?? 0) + BUBBLE_H + GAP;
+			const maxY = window.scrollY + window.innerHeight - spriteH - 80;
+
+			let bestX = minX;
+			let bestY = minY;
+			let bestScore = Infinity;
+			for (let ty = maxY; ty >= minY; ty -= 24) {
+				for (let tx = minX; tx <= maxX; tx += 24) {
+					const overlap =
+						countCollisions(tx, ty, spriteW, spriteH) +
+						countCollisions(tx, ty - BUBBLE_H - GAP, spriteW, BUBBLE_H);
+					// lower is better on a phone: keep the avatar away from the headline
+					const score = overlap * 1000 - ty * 0.01;
+					if (score < bestScore) {
+						bestScore = score;
+						bestX = tx;
+						bestY = ty;
+					}
+				}
+			}
+			place(bestX, bestY);
+			return;
+		}
+		const midX = window.innerWidth * 0.5 - spriteW / 2;
 		// the bubble sits above the sprite, so score both boxes
 		const bubbleH = 44;
 		const overlapCount = (x: number) =>
@@ -359,6 +407,12 @@ export function createCharacter({
 
 	const onScrollSettled = () => {
 		if (dragging || mood === 'walk' || mood === 'portalOut' || mood === 'portalIn') return;
+		if (window.innerWidth < 768) {
+			centreInStage();
+			const sec = sectionAtCentre();
+			if (sec) onSettle?.({ el: sec, top: 0, left: 0, right: 0 });
+			return;
+		}
 		const p = nearest();
 		if (!p) {
 			// Nothing worth standing on in view: hold the vertical centre of the stage.
@@ -407,7 +461,12 @@ export function createCharacter({
 		),
 		vh: window.innerHeight
 	};
-	if (first) {
+	if (window.innerWidth < 768) {
+		// Phone: the scan owns placement. A ledge here sits on top of the copy.
+		centreInStage();
+		const sec = sectionAtCentre();
+		if (sec) onSettle?.({ el: sec, top: 0, left: 0, right: 0 });
+	} else if (first) {
 		standOn(first);
 	} else {
 		// No platform qualifies (nothing in view clears the chrome and the top quarter).
@@ -421,6 +480,12 @@ export function createCharacter({
 	if (document.fonts?.ready) {
 		void document.fonts.ready.then(() => {
 			platforms = readPlatforms(scale);
+			// Phones never stand on a ledge: the scan owns placement, and re-seating here was
+			// what put the sprite back on the alias block after it had been placed correctly.
+			if (window.innerWidth < 768) {
+				centreInStage();
+				return;
+			}
 			const settled = nearest();
 			if (settled) standOn(settled);
 		});
@@ -439,6 +504,10 @@ export function createCharacter({
 	// platforms move when fonts load, panels open, the window resizes
 	const ro = new ResizeObserver(() => {
 		platforms = readPlatforms(scale);
+		if (window.innerWidth < 768) {
+			centreInStage();
+			return;
+		}
 		if (current) {
 			const match = platforms.find((p) => p.el === current?.el);
 			if (match) standOn(match);
@@ -471,7 +540,8 @@ export function createCharacter({
 export function characterEnabled(): boolean {
 	if (typeof window === 'undefined') return false;
 	if (prefersReducedMotion()) return false;
-	return window.innerWidth >= 640;
+	// Phones keep the avatar: it is the page's personality, and touch gets the tap reactions.
+	return window.innerWidth >= 320;
 }
 
 export { snapshot };

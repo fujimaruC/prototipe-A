@@ -3,8 +3,11 @@ import { identity } from '$lib/content';
 import { tick } from '$lib/fx/audio';
 import { playRing } from '$lib/fx/ring';
 import { app, toggleMode } from '$lib/stores/app.svelte';
+import { unlock } from '$lib/game/state.svelte';
+import { pushAchievement } from '$lib/game/toasts.svelte';
 import { prefersReducedMotion } from '$lib/fx/env';
 import Telemetry from './Telemetry.svelte';
+import GameHud from './GameHud.svelte';
 
 async function onMode(e: MouseEvent) {
 	const el = e.currentTarget as HTMLElement;
@@ -16,6 +19,8 @@ async function onMode(e: MouseEvent) {
 	const accent = cs.getPropertyValue('--accent').trim() || '#a34817';
 
 	toggleMode();
+	const u = unlock('invert');
+	if (u) pushAchievement(u.achievement, u.levelUp);
 	if (app.sound) tick('tap');
 	if (prefersReducedMotion()) return;
 	await playRing({ x, y, ground, accent, duration: 520 });
@@ -26,6 +31,8 @@ function onSound() {
 }
 function onIndex() {
 	app.indexOpen = true;
+	const u = unlock('index');
+	if (u) pushAchievement(u.achievement, u.levelUp);
 	if (app.sound) tick('open');
 }
 </script>
@@ -38,6 +45,8 @@ function onIndex() {
 	</div>
 
 	<Telemetry />
+
+	<GameHud />
 
 	<div class="controls">
 		<button
@@ -134,16 +143,21 @@ function onIndex() {
 		.chrome {
 			gap: var(--s-2);
 		}
-		.brand {
-			order: 1;
-		}
-		.controls {
+		:global(.hud) {
 			order: 2;
 			flex: 1;
 			justify-content: flex-end;
 		}
-		:global(.telemetry) {
+		.brand {
+			order: 1;
+		}
+		.controls {
 			order: 3;
+			flex: 1 1 100%;
+			justify-content: flex-end;
+		}
+		:global(.telemetry) {
+			order: 4;
 			width: 100%;
 		}
 		.ctl {

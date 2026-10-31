@@ -3,6 +3,8 @@ import { ports } from '$lib/content';
 import { app } from '$lib/stores/app.svelte';
 import { playRing } from '$lib/fx/ring';
 import { prefersReducedMotion } from '$lib/fx/env';
+import { unlock } from '$lib/game/state.svelte';
+import { pushAchievement } from '$lib/game/toasts.svelte';
 
 const ids = ['profile', 'cases', 'record', 'stack', 'contact'];
 const entries = ports.map((p, i) => ({ ...p, id: ids[i] ?? '' }));
@@ -64,7 +66,12 @@ function choose(id: string, origin?: { x: number; y: number }) {
 }
 function summonCharacter() {
 	close();
-	window.__fujimaru?.summon();
+	// Only award the badge when a character actually exists to summon: otherwise the summon is
+	// a no-op (reduced motion, or no character on this viewport) and the badge would be a lie.
+	if (!window.__fujimaru) return;
+	window.__fujimaru.summon();
+	const u = unlock('fujimaru');
+	if (u) pushAchievement(u.achievement, u.levelUp);
 }
 
 function onKey(e: KeyboardEvent) {

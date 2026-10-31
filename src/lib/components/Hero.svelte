@@ -7,11 +7,13 @@
 	import { onFrame } from '$lib/fx/driver';
 	import { getLayer } from '$lib/gl/instance';
 	import Cable from './Cable.svelte';
+	import PacketField from './PacketField.svelte';
 	import TestMarker from '$lib/components/TestMarker.svelte';
 
 	let nameEl: HTMLHeadingElement | undefined = $state();
 	let heroEl: HTMLElement | undefined = $state();
 	let ready = $state(false);
+	const reduced = $derived(prefersReducedMotion());
 
 	onMount(() => {
 		ready = true;
@@ -87,6 +89,7 @@
 </script>
 
 <header class="hero" id="home" data-frame="HOME" bind:this={heroEl}>
+	<PacketField />
 	<div class="hero-grid">
 		<div class="name-block">
 			<p class="mono role">{identity.role}</p>
@@ -103,6 +106,11 @@
 				</span>
 				<span class="sr-only">{identity.first} {identity.last}</span>
 			</h1>
+
+			<div class="fuji-slot" data-platform aria-hidden="true">
+				<span class="slot-hint mono--micro">U0 · FUJIMARU</span>
+				<span class="slot-rule" aria-hidden="true"></span>
+			</div>
 		</div>
 
 		<div class="hero-side">
@@ -141,9 +149,9 @@
 	</div>
 
 	<div class="hero-foot">
-		<span class="mono--micro">PACKETS <b>{app.packets}</b></span>
+		<span class="mono--micro">{reduced ? 'REDUCED MOTION // FIELD OFF' : 'TAP A PACKET'} <b>+XP</b></span>
 		<TestMarker id="TP-05" />
-		<span class="mono--micro">CLICK THE FIELD</span>
+		<span class="mono--micro hide-sm">CLICK THE FIELD</span>
 	</div>
 </header>
 
@@ -156,6 +164,8 @@
 		border-bottom: var(--hair) solid var(--line-strong);
 	}
 	.hero-grid {
+		position: relative;
+		z-index: 1;
 		display: grid;
 		/* the 1.55fr name column now reserves a real gutter, so the "O" cannot reach the copy */
 		grid-template-columns: minmax(0, 1.42fr) minmax(300px, 1fr);
@@ -288,6 +298,39 @@
 		color: var(--accent-ink);
 		border-color: var(--accent);
 	}
+	/* Mobile-only avatar ledge: an empty band the character stands in, so it never has to
+	   float over the copy. Hidden on desktop, where the port strip is its home. */
+	.fuji-slot {
+		display: none;
+	}
+	@media (max-width: 767px) {
+		/* A labelled compartment for the character, so the avatar has a home that reads as part
+		   of the drawing rather than floating over the copy. */
+		.fuji-slot {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--s-3);
+			min-height: 68px;
+			margin-top: var(--s-5);
+			padding: 0 0 0 var(--s-2);
+			border: var(--hair) solid var(--line);
+			border-right: 0;
+		}
+		.slot-rule {
+			flex: 1;
+			height: 1px;
+			background: var(--line);
+		}
+		.slot-hint {
+			color: var(--ink-3);
+			white-space: nowrap;
+			order: 1;
+		}
+		.slot-rule {
+			order: 2;
+		}
+	}
 	.strip-wrap {
 		position: relative;
 		margin-top: var(--s-7);
@@ -325,6 +368,8 @@
 		line-height: 1.35;
 	}
 	.hero-foot {
+		position: relative;
+		z-index: 1;
 		align-items: center;
 		background: var(--ground);
 		padding: var(--s-3) 0 var(--s-6);

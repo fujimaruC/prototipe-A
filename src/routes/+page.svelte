@@ -10,6 +10,8 @@ import Stack from '$lib/components/Stack.svelte';
 import TestPoints from '$lib/components/TestPoints.svelte';
 import { identity, meta } from '$lib/content';
 import { onFrame } from '$lib/fx/driver';
+import { markSectionSeen } from '$lib/game/state.svelte';
+import { pushAchievement } from '$lib/game/toasts.svelte';
 import { prefersReducedMotion } from '$lib/fx/env';
 import { initReveals, initVelocitySkew } from '$lib/fx/reveal';
 
@@ -26,6 +28,10 @@ onMount(() => {
 			const el = document.getElementById(id);
 			if (!el) continue;
 			if (el.getBoundingClientRect().top <= window.innerHeight * 0.35) current = id;
+		}
+		if (current !== active) {
+			const u = markSectionSeen(current);
+			if (u) pushAchievement(u.achievement, u.levelUp);
 		}
 		active = current;
 	});

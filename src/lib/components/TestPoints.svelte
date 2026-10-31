@@ -4,6 +4,8 @@
 	import { submit, TOTAL_TEST_POINTS } from '$lib/flags';
 	import { tick } from '$lib/fx/audio';
 	import { addFound, app } from '$lib/stores/app.svelte';
+	import { unlock } from '$lib/game/state.svelte';
+	import { pushAchievement } from '$lib/game/toasts.svelte';
 
 let value = $state('');
 let status = $state<'idle' | 'checking' | 'found' | 'duplicate' | 'invalid' | 'unavailable'>('idle');
@@ -20,6 +22,14 @@ async function onSubmit(e: SubmitEvent) {
 		status = 'found';
 		addFound(result.id);
 		message = `${result.id} traced. ${app.found.length} of ${TOTAL_TEST_POINTS} found.`;
+		{
+			const first = unlock('traced-1');
+			if (first) pushAchievement(first.achievement, first.levelUp);
+			if (app.found.length >= TOTAL_TEST_POINTS) {
+				const all = unlock('traced-all');
+				if (all) pushAchievement(all.achievement, all.levelUp);
+			}
+		}
 		live = message;
 		value = '';
 		if (app.sound) tick('chime');
